@@ -16,7 +16,7 @@ npm run build    # static output in dist/
 - `src/data/cv.ts` — CV sections (education, experience, awards, skills…).
 - `src/content/publications/*.md` — one file per publication (schema in `src/content.config.ts`).
   Covers/logos live in `src/assets/publications/`.
-- `src/content/news/*.md` — one file per news item: `date` (`YYYY-MM-DD`, or `YYYY-MM` if the day
+- `src/content/activities/*.md` — one file per activity (talk, award, conference…): `date` (`YYYY-MM-DD`, or `YYYY-MM` if the day
   doesn't matter), optional `endDate` for multi-day events, `category`, `summary` (one line for the
   home page), `location`, `links`, related `publications`, optional `image`; the body is the detailed text.
 - `src/content/projects/*.md` — one file per project (summary, tags, repo, links, related publications).

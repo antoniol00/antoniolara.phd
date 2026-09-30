@@ -1,15 +1,15 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 
-export type NewsEntry = CollectionEntry<'news'>;
+export type ActivityEntry = CollectionEntry<'activities'>;
 
-export const categoryLabels: Record<NewsEntry['data']['category'], string> = {
+export const categoryLabels: Record<ActivityEntry['data']['category'], string> = {
   award: 'Award',
   talk: 'Talk',
   conference: 'Conference',
   publication: 'Publication',
   'research-stay': 'Research stay',
   teaching: 'Teaching',
-  other: 'News',
+  other: 'Activity',
 };
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -44,7 +44,7 @@ export function formatRange(start: ParsedDate, end?: ParsedDate): string {
   return `${start.day} ${MONTHS[start.month - 1]} – ${end.day} ${shortMonth(end)}`;
 }
 
-export async function getNews(): Promise<NewsEntry[]> {
-  const items = await getCollection('news');
+export async function getActivities(): Promise<ActivityEntry[]> {
+  const items = await getCollection('activities');
   return items.sort((a, b) => sortKey(parseDate(b.data.date)) - sortKey(parseDate(a.data.date)));
 }

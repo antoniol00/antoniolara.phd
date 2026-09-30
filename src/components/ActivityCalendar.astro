@@ -1,8 +1,8 @@
 ---
-import type { NewsEntry } from '../lib/news';
+import type { ActivityEntry } from '../lib/activities';
 
 interface Props {
-  items: NewsEntry[];
+  items: ActivityEntry[];
 }
 
 const events = Astro.props.items.map((n) => ({
@@ -14,7 +14,7 @@ const events = Astro.props.items.map((n) => ({
 }));
 ---
 
-<aside class="calendar" data-news-calendar aria-label="News calendar">
+<aside class="calendar" data-activity-calendar aria-label="Activity calendar">
   <script type="application/json" data-events set:html={JSON.stringify(events)} />
 
   <div class="card">
@@ -52,7 +52,7 @@ const events = Astro.props.items.map((n) => ({
 
   function init() {
     cleanup?.();
-    const root = document.querySelector<HTMLElement>('[data-news-calendar]');
+    const root = document.querySelector<HTMLElement>('[data-activity-calendar]');
     if (!root) return;
 
     const events: CalEvent[] = JSON.parse(root.querySelector('[data-events]')!.textContent || '[]');
@@ -216,7 +216,7 @@ const events = Astro.props.items.map((n) => ({
       { rootMargin: '-20% 0px -65% 0px' },
     );
     document.querySelectorAll('[data-month]').forEach((el) => {
-      if (el.closest('[data-news-calendar]')) return;
+      if (el.closest('[data-activity-calendar]')) return;
       io.observe(el);
     });
 

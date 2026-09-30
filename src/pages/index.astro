@@ -1,30 +1,19 @@
 ---
 import { Image } from 'astro:assets';
-import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from '../components/Icon.astro';
 import PublicationList from '../components/PublicationList.astro';
 import { site, socials } from '../data/site';
 import { researchInterests } from '../data/cv';
-import { getNews, parseDate, shortMonth } from '../lib/news';
+import { getActivities, parseDate, shortMonth } from '../lib/activities';
 import { getPublications } from '../lib/publications';
 import { url } from '../lib/url';
 import profile from '../assets/profile.png';
 
 const publications = await getPublications();
-const news = (await getNews()).slice(0, 4);
+const activities = (await getActivities()).slice(0, 4);
 const selected = publications.filter((p) => p.data.selected);
-const projects = await getCollection('projects');
 
-const stats = [
-  { value: publications.filter((p) => p.data.type === 'journal').length, label: 'JCR journal articles' },
-  {
-    value: publications.filter((p) => p.data.jcr?.quartile === 'Q1').length,
-    label: 'in Q1 journals',
-  },
-  { value: publications.filter((p) => p.data.type === 'conference').length, label: 'national conferences' },
-  { value: projects.length, label: 'open-source projects' },
-];
 ---
 
 <BaseLayout title="About">
@@ -99,28 +88,17 @@ const stats = [
       </figure>
     </section>
 
-    <section class="stats" aria-label="At a glance" data-reveal-stagger="80">
-      {
-        stats.map((s) => (
-          <div class="stat">
-            <span class="value" data-count={s.value}>{s.value}</span>
-            <span class="label">{s.label}</span>
-          </div>
-        ))
-      }
-    </section>
-
     <section>
       <div class="section-head" data-reveal>
-        <h2>News</h2>
-        <a href={url('/news')}>All news →</a>
+        <h2>Activities</h2>
+        <a href={url('/activities')}>All activities →</a>
       </div>
-      <ul class="news" data-reveal-stagger="70">
+      <ul class="activities" data-reveal-stagger="70">
         {
-          news.map((n) => (
+          activities.map((n) => (
             <li>
               <time datetime={n.data.date}>{shortMonth(parseDate(n.data.date))}</time>
-              <a class="serif" href={`${url('/news')}#${n.id}`}>
+              <a class="serif" href={`${url('/activities')}#${n.id}`}>
                 {n.data.summary}
               </a>
             </li>
@@ -142,34 +120,6 @@ const stats = [
     }
   </div>
 </BaseLayout>
-
-<script>
-  // Count-up animation for the stats strip.
-  function initCounters() {
-    const els = document.querySelectorAll<HTMLElement>('.stat .value[data-count]');
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return;
-    const io = new IntersectionObserver((entries) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        const el = entry.target as HTMLElement;
-        const target = Number(el.dataset.count);
-        const start = performance.now();
-        const tick = (t: number) => {
-          const p = Math.min((t - start) / 900, 1);
-          el.textContent = String(Math.round(target * (1 - Math.pow(1 - p, 3))));
-          if (p < 1) requestAnimationFrame(tick);
-        };
-        requestAnimationFrame(tick);
-        io.unobserve(el);
-      }
-    }, { threshold: 0.6 });
-    els.forEach((el) => {
-      el.textContent = '0';
-      io.observe(el);
-    });
-  }
-  document.addEventListener('astro:page-load', initCounters);
-</script>
 
 <style>
   .stack {
@@ -286,47 +236,13 @@ const stats = [
     color: var(--fg-mute);
   }
 
-  /* ----- stats ----- */
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1px;
-    background-color: var(--border);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  @media (min-width: 768px) {
-    .stats { grid-template-columns: repeat(4, 1fr); }
-  }
-  .stat {
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-    padding: 1.25rem 1.4rem;
-    background-color: var(--bg-tint);
-    transition: background-color 0.3s var(--ease);
-  }
-  .stat:hover { background-color: var(--accent-tint); }
-  .value {
-    font-size: 2.2rem;
-    font-weight: 300;
-    line-height: 1.1;
-    color: var(--accent);
-    font-variant-numeric: tabular-nums;
-  }
-  .label {
-    font-size: 0.85rem;
-    color: var(--fg-mute);
-  }
-
-  /* ----- news ----- */
-  .news {
+  /* ----- activities ----- */
+  .activities {
     list-style: none;
     display: flex;
     flex-direction: column;
   }
-  .news > li {
+  .activities > li {
     display: grid;
     grid-template-columns: 6rem 1fr;
     gap: 1rem;
@@ -336,8 +252,8 @@ const stats = [
     border-radius: 6px;
     transition: background-color 0.3s var(--ease);
   }
-  .news > li:hover { background-color: var(--bg-tint); }
-  .news time {
+  .activities > li:hover { background-color: var(--bg-tint); }
+  .activities time {
     font-size: 0.8rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -345,6 +261,6 @@ const stats = [
     color: var(--accent-soft);
     padding-top: 0.15rem;
   }
-  .news a { color: var(--fg-soft); }
-  .news a:hover { color: var(--accent); }
+  .activities a { color: var(--fg-soft); }
+  .activities a:hover { color: var(--accent); }
 </style>

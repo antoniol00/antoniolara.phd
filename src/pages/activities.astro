@@ -2,30 +2,32 @@
 import { render } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from '../components/Icon.astro';
-import NewsCalendar from '../components/NewsCalendar.astro';
+import ActivityCalendar from '../components/ActivityCalendar.astro';
 import {
   categoryLabels,
   formatRange,
-  getNews,
+  getActivities,
   monthKey,
   monthLabel,
   parseDate,
-  type NewsEntry,
-} from '../lib/news';
+  type ActivityEntry,
+} from '../lib/activities';
 import { url } from '../lib/url';
+import { getPublicationLabels } from '../lib/publications';
 
-const news = await getNews();
+const activities = await getActivities();
+const pubLabels = await getPublicationLabels();
 
 interface Rendered {
-  entry: NewsEntry;
+  entry: ActivityEntry;
   Content: Awaited<ReturnType<typeof render>>['Content'];
   start: ReturnType<typeof parseDate>;
   end?: ReturnType<typeof parseDate>;
 }
 
-// year → month → entries, newest first (news is already sorted).
+// year → month → entries, newest first (activities are already sorted).
 const years: { year: number; months: { key: string; label: string; entries: Rendered[] }[] }[] = [];
-for (const entry of news) {
+for (const entry of activities) {
   const start = parseDate(entry.data.date);
   const end = entry.data.endDate ? parseDate(entry.data.endDate) : undefined;
   const { Content } = await render(entry);
@@ -38,11 +40,11 @@ for (const entry of news) {
 }
 ---
 
-<BaseLayout title="News" description="News, talks, awards and research activity of Antonio Lara Gutiérrez.">
+<BaseLayout title="Activities" description="Talks, awards, conferences and research activity of Antonio Lara Gutiérrez.">
   <div class="stack">
     <header class="page-header" data-reveal>
-      <span class="eyebrow">Activity</span>
-      <h1>News</h1>
+      <span class="eyebrow">Month by month</span>
+      <h1>Activities</h1>
       <p>
         Talks, awards, conferences, publications and research stays, month by month. Use the
         calendar to jump through what has been going on.
@@ -52,7 +54,7 @@ for (const entry of news) {
     <div class="layout">
       <div class="aside-wrap">
         <div class="sticky">
-          <NewsCalendar items={news} />
+          <ActivityCalendar items={activities} />
         </div>
       </div>
 
@@ -100,8 +102,8 @@ for (const entry of news) {
                                 </a>
                               ))}
                               {entry.data.publications.map((key) => (
-                                <a class="pill mono" href={`${url('/publications')}#${key}`}>
-                                  <Icon name="file-text" size={12} /> {key}
+                                <a class="pill" href={`${url('/publications')}#${key}`}>
+                                  <Icon name="file-text" size={12} /> Paper · {pubLabels.get(key) ?? key}
                                 </a>
                               ))}
                             </div>
@@ -115,7 +117,7 @@ for (const entry of news) {
             </section>
           ))
         }
-        {news.length === 0 && <p class="muted italic">No news yet.</p>}
+        {activities.length === 0 && <p class="muted italic">No activities yet.</p>}
       </div>
     </div>
   </div>

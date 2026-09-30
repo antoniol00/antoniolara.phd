@@ -54,8 +54,8 @@ const projects = defineCollection({
 /** YAML turns "2026-03-17" into a Date; keep dates as "YYYY-MM[-DD]" strings. */
 const isoDay = (v: unknown) => (v instanceof Date ? v.toISOString().slice(0, 10) : v);
 
-const news = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/news' }),
+const activities = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/activities' }),
   schema: ({ image }) =>
     z.object({
       title: z.string(),
@@ -74,4 +74,4 @@ const news = defineCollection({
     }),
 });
 
-export const collections = { publications, projects, news };
+export const collections = { publications, projects, activities };

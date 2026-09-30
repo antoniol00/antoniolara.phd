@@ -3,6 +3,7 @@ import { getCollection, render } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from '../components/Icon.astro';
 import { url } from '../lib/url';
+import { getPublicationLabels } from '../lib/publications';
 
 const projects = (await getCollection('projects')).sort(
   (a, b) =>
@@ -10,6 +11,7 @@ const projects = (await getCollection('projects')).sort(
     b.data.year - a.data.year ||
     a.data.title.localeCompare(b.data.title),
 );
+const pubLabels = await getPublicationLabels();
 const rendered = await Promise.all(projects.map(async (p) => ({ p, Content: (await render(p)).Content })));
 ---
 
@@ -67,8 +69,8 @@ const rendered = await Promise.all(projects.map(async (p) => ({ p, Content: (awa
                 </a>
               ))}
               {p.data.publications.map((key) => (
-                <a class="pill mono" href={`${url('/publications')}#${key}`}>
-                  <Icon name="file-text" size={12} /> {key}
+                <a class="pill" href={`${url('/publications')}#${key}`}>
+                  <Icon name="file-text" size={12} /> {pubLabels.get(key) ?? 'Paper'}
                 </a>
               ))}
             </div>

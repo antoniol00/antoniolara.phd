@@ -11,4 +11,8 @@ export default defineConfig({
   site,
   base,
   trailingSlash: 'ignore',
+  redirects: {
+    // Redirect targets are not prefixed with `base` automatically.
+    '/news': `${base.replace(/\/$/, '')}/activities`,
+  },
 });
