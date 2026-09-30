@@ -15,6 +15,11 @@ npm run build    # static output in dist/
 - `src/data/site.ts` — name, description, social links, navigation.
 - `src/data/cv.ts` — CV sections (education, experience, awards, skills, news…).
 - `src/content/publications/*.md` — one file per publication (schema in `src/content.config.ts`).
+  Covers/logos live in `src/assets/publications/`.
+- `src/content/projects/*.md` — one file per project (summary, tags, repo, links, related publications).
+- `src/data/authors.ts` — ORCID iDs of co-authors, linked from author names.
+- `src/assets/gallery/<country>/` — gallery photos, one folder per country (see the README there;
+  optional names/captions in `src/data/gallery.ts`).
 - `public/cv-antonio-lara-gutierrez.pdf` — downloadable CV (source files in `docs/`).
 
 ## Deployment

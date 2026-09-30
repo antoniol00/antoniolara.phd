@@ -1,0 +1,189 @@
+---
+import { Image, getImage } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getGallery } from '../lib/gallery';
+
+const gallery = await Promise.all(
+  getGallery().map(async (g) => ({
+    ...g,
+    photos: await Promise.all(
+      g.photos.map(async (photo) => ({
+        ...photo,
+        full: (await getImage({ src: photo.src, width: Math.min(photo.src.width, 1600), format: 'webp' })).src,
+      })),
+    ),
+  })),
+);
+const total = gallery.reduce((n, g) => n + g.photos.length, 0);
+---
+
+<BaseLayout title="Gallery" description="Photographs by Antonio Lara Gutiérrez, grouped by country.">
+  <div class="stack">
+    <header class="page-header">
+      <h1>Gallery</h1>
+      <p>Photographs taken along the way, grouped by country.</p>
+      {
+        gallery.length > 1 && (
+          <nav class="countries" aria-label="Countries">
+            {gallery.map((g) => (
+              <a class="pill" href={`#${g.slug}`}>
+                {g.name} <span class="mono muted">{g.photos.length}</span>
+              </a>
+            ))}
+          </nav>
+        )
+      }
+    </header>
+
+    {total === 0 && <p class="muted italic">Photos coming soon.</p>}
+
+    {
+      gallery.map((g) => (
+        <section id={g.slug} class="country">
+          <div class="section-head">
+            <h2>{g.name}</h2>
+            <span class="mono muted count">
+              {g.photos.length} {g.photos.length === 1 ? 'photo' : 'photos'}
+            </span>
+          </div>
+          {g.description && <p class="soft description">{g.description}</p>}
+          <ul class="photos">
+            {g.photos.map((photo) => (
+              <li>
+                <button type="button" class="thumb" data-full={photo.full} data-caption={photo.caption}>
+                  <Image
+                    src={photo.src}
+                    alt={photo.caption}
+                    widths={[400, 800]}
+                    sizes="(min-width: 768px) 18rem, 50vw"
+                  />
+                </button>
+                <p class="caption muted">{photo.caption}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+  </div>
+
+  <dialog id="lightbox" aria-label="Photo viewer">
+    <form method="dialog">
+      <button class="close" aria-label="Close">×</button>
+    </form>
+    <img alt="" />
+    <p class="lightbox-caption"></p>
+  </dialog>
+</BaseLayout>
+
+<script>
+  const dialog = document.querySelector<HTMLDialogElement>('#lightbox');
+  const img = dialog?.querySelector('img');
+  const caption = dialog?.querySelector('.lightbox-caption');
+
+  document.querySelectorAll<HTMLButtonElement>('.thumb').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (!dialog || !img || !caption) return;
+      img.src = btn.dataset.full ?? '';
+      img.alt = btn.dataset.caption ?? '';
+      caption.textContent = btn.dataset.caption ?? '';
+      dialog.showModal();
+    });
+  });
+
+  dialog?.addEventListener('click', (e) => {
+    if (e.target === dialog) dialog.close();
+  });
+</script>
+
+<style>
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: 3.5rem;
+  }
+  .countries {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .country {
+    scroll-margin-top: 5rem;
+  }
+  .count { font-size: 0.75rem; }
+  .description {
+    max-width: var(--prose-width);
+    margin: -0.5rem 0 1.25rem;
+    font-size: 0.925rem;
+  }
+  .photos {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  @media (min-width: 768px) {
+    .photos { grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+  }
+  .thumb {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: var(--bg-soft);
+    cursor: zoom-in;
+  }
+  .thumb :global(img) {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+  .thumb:hover :global(img) { transform: scale(1.03); }
+  .caption {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  dialog {
+    max-width: min(92vw, 70rem);
+    max-height: 92vh;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    background: var(--bg-tint);
+    color: var(--fg);
+  }
+  dialog::backdrop {
+    background: rgb(26 22 19 / 0.75);
+    backdrop-filter: blur(4px);
+  }
+  dialog img {
+    max-width: 100%;
+    max-height: 80vh;
+    margin: 0 auto;
+    border-radius: 0.4rem;
+  }
+  .lightbox-caption {
+    margin-top: 0.75rem;
+    text-align: center;
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    font-style: italic;
+  }
+  .close {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.6rem;
+    background: none;
+    border: none;
+    font-size: 1.75rem;
+    line-height: 1;
+    color: var(--fg-mute);
+    cursor: pointer;
+  }
+  .close:hover { color: var(--fg); }
+</style>
