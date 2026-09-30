@@ -11,13 +11,19 @@ export const site = {
 
 export interface Social {
   name: string;
-  icon: 'mail' | 'github' | 'linkedin';
+  icon: 'mail' | 'github' | 'linkedin' | 'orcid';
   href: string;
   label: string;
 }
 
 export const socials: Social[] = [
   { name: 'email', icon: 'mail', href: `mailto:${site.email}`, label: 'Email' },
+  {
+    name: 'orcid',
+    icon: 'orcid',
+    href: 'https://orcid.org/0009-0009-0796-4631',
+    label: 'ORCID',
+  },
   { name: 'github', icon: 'github', href: 'https://github.com/antoniol00', label: 'GitHub' },
   {
     name: 'linkedin',

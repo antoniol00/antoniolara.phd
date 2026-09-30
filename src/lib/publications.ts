@@ -4,13 +4,12 @@ export type Publication = CollectionEntry<'publications'>;
 
 export const publicationTypes = {
   journal: 'Journal Articles',
-  review: 'Under Review',
   conference: 'National Conferences',
 } as const;
 
 const typeOrder = Object.keys(publicationTypes);
 
-/** Newest year first; within a year, journals → under review → conferences, then by key. */
+/** Newest year first; within a year, journals before conferences, then by key. */
 export async function getPublications(): Promise<Publication[]> {
   const items = await getCollection('publications');
   return items.sort(

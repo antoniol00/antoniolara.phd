@@ -7,7 +7,7 @@ const publications = defineCollection({
   schema: z.object({
     /** Citation key as it appears in the CV, e.g. "J1". */
     key: z.string(),
-    type: z.enum(['journal', 'review', 'conference']),
+    type: z.enum(['journal', 'conference']),
     title: z.string(),
     /** English translation when the original title is in another language. */
     titleEn: z.string().optional(),
@@ -22,7 +22,6 @@ const publications = defineCollection({
         impactFactor: z.number(),
       })
       .optional(),
-    status: z.string().optional(),
     doi: z.string().optional(),
     pdf: z.string().optional(),
     url: z.url().optional(),
