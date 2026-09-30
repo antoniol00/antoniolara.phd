@@ -99,6 +99,19 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       }
 
       document.addEventListener('astro:page-load', initReveal);
+
+      // Spotlight cards: track the pointer position inside each card.
+      document.addEventListener(
+        'pointermove',
+        (e) => {
+          const card = (e.target as HTMLElement | null)?.closest?.('[data-spotlight]') as HTMLElement | null;
+          if (!card) return;
+          const r = card.getBoundingClientRect();
+          card.style.setProperty('--mx', `${e.clientX - r.left}px`);
+          card.style.setProperty('--my', `${e.clientY - r.top}px`);
+        },
+        { passive: true },
+      );
     </script>
   </body>
 </html>

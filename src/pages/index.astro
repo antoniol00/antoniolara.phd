@@ -5,7 +5,7 @@ import Icon from '../components/Icon.astro';
 import PublicationList from '../components/PublicationList.astro';
 import { site, socials } from '../data/site';
 import { researchInterests } from '../data/cv';
-import { getActivities, parseDate, shortMonth } from '../lib/activities';
+import { categoryLabels, formatRange, getActivities, parseDate } from '../lib/activities';
 import { getPublications } from '../lib/publications';
 import { url } from '../lib/url';
 import profile from '../assets/profile.png';
@@ -53,25 +53,28 @@ const selected = publications.filter((p) => p.data.selected);
             <Icon name="file-down" size={16} /> Download CV
           </a>
           <a class="button ghost" href={url('/publications')}>Publications</a>
-          <div class="socials">
-            {
-              socials.map((s) => (
+        </div>
+        <ul class="socials" aria-label="Profiles and contact">
+          {
+            socials.map((s) => (
+              <li>
                 <a
                   href={s.href}
                   aria-label={s.label}
-                  title={s.label}
+                  data-label={s.label}
                   target={s.name === 'email' ? undefined : '_blank'}
                   rel="noopener noreferrer"
                 >
-                  <Icon name={s.icon} size={20} />
+                  <Icon name={s.icon} size={18} />
                 </a>
-              ))
-            }
-          </div>
-        </div>
+              </li>
+            ))
+          }
+        </ul>
       </div>
 
-      <figure class="portrait" data-reveal style="--reveal-delay: 200ms">
+      <figure class="portrait" data-reveal style="--reveal-delay: 200ms" data-tilt>
+        <div class="halo" aria-hidden="true"></div>
         <div class="frame">
           <Image
             src={profile}
@@ -93,13 +96,31 @@ const selected = publications.filter((p) => p.data.selected);
         <h2>Activities</h2>
         <a href={url('/activities')}>All activities →</a>
       </div>
-      <ul class="activities" data-reveal-stagger="70">
+      <ul class="activities" data-reveal-stagger="80">
         {
           activities.map((n) => (
             <li>
-              <time datetime={n.data.date}>{shortMonth(parseDate(n.data.date))}</time>
-              <a class="serif" href={`${url('/activities')}#${n.id}`}>
-                {n.data.summary}
+              <a
+                class="act"
+                data-cat={n.data.category}
+                data-spotlight
+                href={`${url('/activities')}#${n.id}`}
+                transition:name={`act-${n.id}`}
+              >
+                <span class="act-meta">
+                  <span class="act-cat">{categoryLabels[n.data.category]}</span>
+                  <time datetime={n.data.date}>
+                    {formatRange(
+                      parseDate(n.data.date),
+                      n.data.endDate ? parseDate(n.data.endDate) : undefined,
+                    )}
+                  </time>
+                </span>
+                <span class="act-title">{n.data.title}</span>
+                <span class="act-summary serif">{n.data.summary}</span>
+                <span class="act-go" aria-hidden="true">
+                  <Icon name="arrow" size={16} />
+                </span>
               </a>
             </li>
           ))
@@ -121,6 +142,26 @@ const selected = publications.filter((p) => p.data.selected);
   </div>
 </BaseLayout>
 
+<script>
+  // Gentle 3D tilt of the portrait following the pointer.
+  function initTilt() {
+    const el = document.querySelector<HTMLElement>('[data-tilt]');
+    if (!el || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    el.addEventListener('pointermove', (e) => {
+      const r = el.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5;
+      const y = (e.clientY - r.top) / r.height - 0.5;
+      el.style.setProperty('--ry', `${x * 10}deg`);
+      el.style.setProperty('--rx', `${-y * 10}deg`);
+    });
+    el.addEventListener('pointerleave', () => {
+      el.style.setProperty('--ry', '0deg');
+      el.style.setProperty('--rx', '0deg');
+    });
+  }
+  document.addEventListener('astro:page-load', initTilt);
+</script>
+
 <style>
   .stack {
     display: flex;
@@ -130,10 +171,42 @@ const selected = publications.filter((p) => p.data.selected);
 
   /* ----- hero ----- */
   .hero {
+    position: relative;
+    isolation: isolate;
     display: grid;
     grid-template-columns: 1fr;
     gap: 2.5rem;
     align-items: center;
+  }
+  /* Full-bleed animated backdrop: drifting navy glows over a faint dot grid. */
+  .hero::before,
+  .hero::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: -5rem calc(50% - 50vw) -3rem;
+    pointer-events: none;
+  }
+  .hero::before {
+    background:
+      radial-gradient(38rem 26rem at 78% 30%, color-mix(in srgb, var(--accent-soft) 26%, transparent), transparent 70%),
+      radial-gradient(30rem 22rem at 12% 10%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 70%),
+      radial-gradient(26rem 20rem at 45% 95%, color-mix(in srgb, #2a8a96 12%, transparent), transparent 70%);
+    background-size: 140% 140%;
+    animation: drift 22s ease-in-out infinite alternate;
+    filter: blur(6px);
+  }
+  .hero::after {
+    background-image: radial-gradient(color-mix(in srgb, var(--accent) 22%, transparent) 1px, transparent 1.2px);
+    background-size: 22px 22px;
+    -webkit-mask-image: radial-gradient(ellipse 70% 65% at 60% 40%, #000 30%, transparent 75%);
+    mask-image: radial-gradient(ellipse 70% 65% at 60% 40%, #000 30%, transparent 75%);
+    opacity: 0.55;
+  }
+  @keyframes drift {
+    0% { background-position: 0% 0%, 100% 0%, 50% 100%; }
+    50% { background-position: 30% 20%, 70% 30%, 30% 70%; }
+    100% { background-position: 10% 40%, 90% 10%, 70% 80%; }
   }
   @media (min-width: 820px) {
     .hero {
@@ -188,36 +261,114 @@ const selected = publications.filter((p) => p.data.selected);
     gap: 0.75rem 1rem;
     padding-top: 0.6rem;
   }
+
+  /* Social links: round buttons with a label that slides in on hover. */
   .socials {
+    list-style: none;
     display: flex;
-    gap: 0.9rem;
-    margin-left: 0.25rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
   .socials a {
-    color: var(--fg-mute);
-    transition: color 0.2s var(--ease), transform 0.25s var(--ease);
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--fg-soft);
+    background-color: color-mix(in srgb, var(--bg) 80%, transparent);
+    backdrop-filter: blur(4px);
+    transition:
+      color 0.25s var(--ease),
+      border-color 0.25s var(--ease),
+      background-color 0.25s var(--ease),
+      transform 0.35s var(--ease),
+      box-shadow 0.35s var(--ease);
   }
-  .socials a:hover { color: var(--accent); transform: translateY(-2px); }
+  .socials a:hover,
+  .socials a:focus-visible {
+    color: var(--on-accent);
+    background-color: var(--accent);
+    border-color: var(--accent);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+  }
+  .socials a::after {
+    content: attr(data-label);
+    position: absolute;
+    bottom: calc(100% + 0.55rem);
+    left: 50%;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    color: var(--on-accent);
+    background-color: var(--accent);
+    box-shadow: var(--shadow-md);
+    opacity: 0;
+    transform: translate(-50%, 6px) scale(0.95);
+    pointer-events: none;
+    transition: opacity 0.25s var(--ease), transform 0.3s var(--ease);
+  }
+  .socials a:hover::after,
+  .socials a:focus-visible::after {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
 
+  /* Portrait: rotating gradient halo + pointer tilt. */
   .portrait {
+    --rx: 0deg;
+    --ry: 0deg;
+    position: relative;
     margin: 0 auto;
     width: 15.5rem;
+    perspective: 900px;
   }
   @media (min-width: 820px) {
     .portrait { margin: 0; }
+  }
+  .halo {
+    position: absolute;
+    inset: -7px;
+    bottom: auto;
+    aspect-ratio: 1;
+    border-radius: 1.3rem;
+    background: conic-gradient(from var(--angle, 0deg), var(--accent), #2a8a96, var(--accent-soft), #7b4fa0, var(--accent));
+    filter: blur(0.5px);
+    opacity: 0.85;
+    animation: spin 10s linear infinite;
+    transform: rotateX(var(--rx)) rotateY(var(--ry));
+    transition: transform 0.4s var(--ease);
+  }
+  .halo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: inherit;
+    filter: blur(22px);
+    opacity: 0.45;
+  }
+  @property --angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+  @keyframes spin {
+    to { --angle: 360deg; }
   }
   .frame {
     position: relative;
     border-radius: 1rem;
     overflow: hidden;
     box-shadow: var(--shadow-lg);
-  }
-  .frame::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    box-shadow: inset 0 0 0 1px rgb(18 42 68 / 0.08);
+    border: 3px solid var(--bg);
+    transform: rotateX(var(--rx)) rotateY(var(--ry));
+    transition: transform 0.4s var(--ease);
   }
   .frame :global(img) {
     width: 100%;
@@ -226,7 +377,7 @@ const selected = publications.filter((p) => p.data.selected);
     object-fit: cover;
     transition: transform 0.8s var(--ease);
   }
-  .frame:hover :global(img) { transform: scale(1.04); }
+  .portrait:hover .frame :global(img) { transform: scale(1.04); }
   figcaption {
     display: flex;
     flex-direction: column;
@@ -239,28 +390,78 @@ const selected = publications.filter((p) => p.data.selected);
   /* ----- activities ----- */
   .activities {
     list-style: none;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  @media (min-width: 700px) {
+    .activities { grid-template-columns: 1fr 1fr; }
+  }
+  .activities > li { display: flex; }
+  .act {
+    position: relative;
+    flex: 1;
     display: flex;
     flex-direction: column;
+    gap: 0.35rem;
+    padding: 1.1rem 1.2rem 1.2rem;
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--cat);
+    border-radius: 12px;
+    background-color: var(--bg);
+    background-image: linear-gradient(180deg, var(--cat-bg), transparent 5rem);
+    color: inherit;
+    transition:
+      transform 0.45s var(--ease),
+      box-shadow 0.45s var(--ease),
+      border-color 0.45s var(--ease);
   }
-  .activities > li {
-    display: grid;
-    grid-template-columns: 6rem 1fr;
-    gap: 1rem;
-    padding: 0.8rem 0.5rem;
-    border-bottom: 1px solid var(--border);
-    font-size: 0.95rem;
-    border-radius: 6px;
-    transition: background-color 0.3s var(--ease);
+  .act:hover {
+    color: inherit;
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+    border-color: color-mix(in srgb, var(--cat) 45%, var(--border));
+    border-top-color: var(--cat);
   }
-  .activities > li:hover { background-color: var(--bg-tint); }
-  .activities time {
-    font-size: 0.8rem;
-    font-weight: 600;
+  .act-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+    color: var(--fg-mute);
+  }
+  .act-cat {
+    font-size: 0.66rem;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--accent-soft);
-    padding-top: 0.15rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 3px;
+    color: var(--cat-fg);
+    background-color: var(--cat-bg);
   }
-  .activities a { color: var(--fg-soft); }
-  .activities a:hover { color: var(--accent); }
+  .act-title {
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--fg);
+    padding-right: 1.5rem;
+  }
+  .act-summary {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--fg-soft);
+  }
+  .act-go {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    color: var(--cat);
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.3s var(--ease), transform 0.35s var(--ease);
+  }
+  .act:hover .act-go {
+    opacity: 1;
+    transform: none;
+  }
 </style>

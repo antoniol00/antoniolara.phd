@@ -386,3 +386,48 @@ a.pill:hover {
     animation: none !important;
   }
 }
+
+/* ---------- spotlight cards ---------- */
+/* A soft light follows the pointer inside [data-spotlight] cards and lights up the border. */
+[data-spotlight] {
+  --mx: 50%;
+  --my: 50%;
+  position: relative;
+}
+[data-spotlight]::before,
+[data-spotlight]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s var(--ease);
+}
+[data-spotlight]::before {
+  background: radial-gradient(
+    22rem circle at var(--mx) var(--my),
+    color-mix(in srgb, var(--cat, var(--accent-soft)) 13%, transparent),
+    transparent 60%
+  );
+}
+[data-spotlight]::after {
+  inset: -1px;
+  padding: 1px;
+  background: radial-gradient(
+    14rem circle at var(--mx) var(--my),
+    color-mix(in srgb, var(--cat, var(--accent-soft)) 85%, transparent),
+    transparent 70%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+[data-spotlight]:hover::before,
+[data-spotlight]:hover::after {
+  opacity: 1;
+}
+@media (hover: none) {
+  [data-spotlight]::before,
+  [data-spotlight]::after { display: none; }
+}

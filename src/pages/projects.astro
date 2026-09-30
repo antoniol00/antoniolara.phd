@@ -32,7 +32,7 @@ const rendered = await Promise.all(projects.map(async (p) => ({ p, Content: (awa
     <ul class="grid" data-reveal-stagger="80">
       {
         rendered.map(({ p, Content }) => (
-          <li class="card">
+          <li class="card" data-spotlight>
             <div class="top">
               <span class="eyebrow">{p.data.year}</span>
               {p.data.featured && <span class="featured" data-cat="award">Featured</span>}
