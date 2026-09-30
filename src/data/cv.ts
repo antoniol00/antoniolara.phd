@@ -86,7 +86,7 @@ export const education: TimelineEntry[] = [
 
 export const researchExperience: TimelineEntry[] = [
   {
-    period: 'Feb 2026 – Present',
+    period: 'Feb 2026 – Apr 2026',
     role: 'Visiting Researcher',
     logo: logos.waikato,
     where: 'University of Waikato — Te Ipu o Te Mahara (Artificial Intelligence Institute)',
@@ -134,7 +134,7 @@ export const industryExperience: TimelineEntry[] = [
 
 export const awards: TimelineEntry[] = [
   {
-    period: 'Aug 2026',
+    period: 'Jul 2026',
     role: 'Awarded Project — Chair of Cybersecurity, University of Málaga & Google (VirusTotal)',
     logo: logos.google,
     where: 'Competitive call of the UMA–Google Cybersecurity Chair',

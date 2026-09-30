@@ -8,6 +8,9 @@ export const categoryLabels: Record<ActivityEntry['data']['category'], string> =
   conference: 'Conference',
   publication: 'Publication',
   'research-stay': 'Research stay',
+  competition: 'Competition',
+  training: 'Training',
+  event: 'Event',
   teaching: 'Teaching',
   other: 'Activity',
 };

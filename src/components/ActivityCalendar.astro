@@ -64,17 +64,24 @@ const events = Astro.props.items.map((n) => ({
     // Index: exact days (including every day of a range) and month-level events.
     const byDay = new Map<string, CalEvent[]>();
     const byMonth = new Map<string, CalEvent[]>();
+    const longEvents = new Set<CalEvent>();
     for (const e of events) {
       const [y, m, d] = e.start.split('-').map(Number);
-      const mk = `${y}-${pad(m)}`;
-      byMonth.set(mk, [...(byMonth.get(mk) ?? []), e]);
-      if (!d) continue;
+      if (!d) {
+        const mk = `${y}-${pad(m)}`;
+        byMonth.set(mk, [...(byMonth.get(mk) ?? []), e]);
+        continue;
+      }
       const startDate = new Date(Date.UTC(y, m - 1, d));
       const endDate = e.end ? new Date(e.end + 'T00:00:00Z') : startDate;
+      if (endDate.getTime() - startDate.getTime() > 7 * 86400000) longEvents.add(e);
       for (let t = startDate.getTime(); t <= endDate.getTime(); t += 86400000) {
         const dt = new Date(t);
         const key = ymd(dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
         byDay.set(key, [...(byDay.get(key) ?? []), e]);
+        const mk = key.slice(0, 7);
+        const inMonth = byMonth.get(mk) ?? [];
+        if (!inMonth.includes(e)) byMonth.set(mk, [...inMonth, e]);
       }
     }
 
@@ -111,6 +118,8 @@ const events = Astro.props.items.map((n) => ({
         if (key === todayKey) cell.classList.add('today');
         if (dayEvents) {
           cell.classList.add('has-event');
+          // Days covered only by long ranges (stays, month-long events) get a lighter style.
+          if (dayEvents.every((e) => longEvents.has(e))) cell.classList.add('long');
           const prev = byDay.get(ymd(viewYear, viewMonth, d - 1));
           const next = byDay.get(ymd(viewYear, viewMonth, d + 1));
           const shares = (other?: CalEvent[]) => !!other?.some((e) => dayEvents.includes(e));
@@ -136,8 +145,9 @@ const events = Astro.props.items.map((n) => ({
         const li = document.createElement('li');
         const btn = document.createElement('button');
         btn.type = 'button';
-        const day = e.start.split('-')[2];
-        btn.innerHTML = `<span class="when">${day ? Number(day) : '·'}</span><span class="what"></span>`;
+        const [sy, sm, sd] = e.start.split('-').map(Number);
+        const startsHere = sy === viewYear && sm === viewMonth;
+        btn.innerHTML = `<span class="when">${sd && startsHere ? sd : '·'}</span><span class="what"></span>`;
         btn.querySelector('.what')!.textContent = e.title;
         btn.addEventListener('click', () => scrollToId(e.id));
         li.append(btn);
@@ -329,6 +339,15 @@ const events = Astro.props.items.map((n) => ({
   .grid :global(.day.range.range-start) { border-radius: 999px 0 0 999px; background-color: var(--accent); }
   .grid :global(.day.range.range-end) { border-radius: 0 999px 999px 0; background-color: var(--accent); }
   .grid :global(.day.range:hover) { transform: none; background-color: var(--accent-strong); }
+  .grid :global(.day.long),
+  .grid :global(.day.long.range),
+  .grid :global(.day.long.range-start),
+  .grid :global(.day.long.range-end) {
+    color: var(--accent);
+    font-weight: 500;
+    background-color: var(--accent-tint);
+  }
+  .grid :global(.day.long:hover) { background-color: #d4e0ed; }
 
   .month-events {
     list-style: none;

@@ -1,7 +1,7 @@
 ---
 title: AgentAPT presented at the Google Safety Engineering Center
 summary: Presented AgentAPT with the other awarded projects at the Google Safety Engineering Center (GSEC) Málaga.
-date: 2026-09
+date: 2026-09-09
 category: talk
 location: GSEC Málaga, Spain
 ---

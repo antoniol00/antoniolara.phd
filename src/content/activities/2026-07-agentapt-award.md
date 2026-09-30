@@ -1,7 +1,7 @@
 ---
 title: AgentAPT awarded by the UMA–Google Cybersecurity Chair
 summary: AgentAPT awarded in the competitive call of the UMA–Google (VirusTotal) Cybersecurity Chair.
-date: 2026-08
+date: 2026-07-30
 category: award
 location: Málaga, Spain
 ---
