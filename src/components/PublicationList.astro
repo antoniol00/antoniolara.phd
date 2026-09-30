@@ -1,0 +1,141 @@
+---
+import Icon from './Icon.astro';
+import type { Publication } from '../lib/publications';
+
+interface Props {
+  items: Publication[];
+}
+
+const { items } = Astro.props;
+const self = 'Lara-Gutiérrez, A.';
+---
+
+<ul class="rule-list pubs">
+  {
+    items.map(({ data: pub }) => (
+      <li class="pub">
+        <div class="badge mono" aria-hidden="true">
+          <span class="key">{pub.key}</span>
+          {pub.abbr && <span class="abbr">{pub.abbr}</span>}
+        </div>
+        <div class="body">
+          <h3>{pub.title}</h3>
+          {pub.titleEn && <p class="translation soft">[{pub.titleEn}]</p>}
+          <p class="authors soft">
+            {pub.authors.map((a, i) => (
+              <>
+                <span class:list={{ self: a === self }}>{a}</span>
+                {i < pub.authors.length - 1 && (i === pub.authors.length - 2 ? ' & ' : ', ')}
+              </>
+            ))}
+          </p>
+          <p class="venue">
+            <em>{pub.venue}</em>
+            {pub.details && <span class="muted"> · {pub.details}</span>}
+            <span class="muted"> · {pub.year}</span>
+          </p>
+          <div class="meta">
+            {pub.status && <span class="pill status">{pub.status}</span>}
+            {pub.jcr && (
+              <span class="pill mono">
+                JCR {pub.jcr.quartile} · IF {pub.jcr.impactFactor.toFixed(1)}
+              </span>
+            )}
+            {pub.doi && (
+              <a class="pill" href={`https://doi.org/${pub.doi}`} target="_blank" rel="noopener">
+                <Icon name="external-link" size={12} /> DOI
+              </a>
+            )}
+            {pub.pdf && (
+              <a class="pill" href={pub.pdf} target="_blank" rel="noopener">
+                <Icon name="file-text" size={12} /> PDF
+              </a>
+            )}
+            {pub.url && (
+              <a class="pill" href={pub.url} target="_blank" rel="noopener">
+                <Icon name="external-link" size={12} /> Link
+              </a>
+            )}
+          </div>
+        </div>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .pub {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    padding-block: 1.5rem;
+  }
+  @media (min-width: 768px) {
+    .pub { grid-template-columns: 7rem 1fr; }
+  }
+  .badge {
+    display: none;
+  }
+  @media (min-width: 768px) {
+    .badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      width: 7rem;
+      height: 7rem;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      background-color: var(--bg-soft);
+      text-align: center;
+      padding: 0.5rem;
+    }
+  }
+  .key {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    line-height: 1;
+    color: var(--accent);
+    font-style: italic;
+  }
+  .abbr {
+    font-size: 0.7rem;
+    color: var(--fg-mute);
+  }
+  .body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  h3 {
+    font-size: 1.3rem;
+    line-height: 1.35;
+  }
+  .translation {
+    font-size: 0.875rem;
+    font-style: italic;
+  }
+  .authors {
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+  .self {
+    color: var(--fg);
+    font-weight: 600;
+  }
+  .venue {
+    font-size: 0.875rem;
+  }
+  .venue em { color: var(--fg-soft); }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding-top: 0.25rem;
+  }
+  .status {
+    color: var(--accent);
+    border-color: rgb(193 95 60 / 0.4);
+  }
+</style>

@@ -1,0 +1,80 @@
+---
+import type { TimelineEntry } from '../data/cv';
+
+interface Props {
+  items: TimelineEntry[];
+}
+
+const { items } = Astro.props;
+---
+
+<ol class="timeline">
+  {
+    items.map((e) => (
+      <li>
+        <div class="period mono muted">{e.period}</div>
+        <div class="entry">
+          <h3>{e.role}</h3>
+          <p class="soft">
+            {e.where}
+            {e.location && <span class="muted"> · {e.location}</span>}
+          </p>
+          {e.summary && <p class="summary soft">{e.summary}</p>}
+          {e.bullets && (
+            <ul>
+              {e.bullets.map((b) => (
+                <li>{b}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  .timeline {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  .timeline > li {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  @media (min-width: 768px) {
+    .timeline > li {
+      grid-template-columns: 11rem 1fr;
+      gap: 2rem;
+    }
+  }
+  .period {
+    font-size: 0.8rem;
+    padding-top: 0.3rem;
+  }
+  .entry {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  h3 {
+    font-size: 1.3rem;
+  }
+  .summary,
+  ul {
+    font-size: 0.875rem;
+    color: var(--fg-soft);
+    padding-top: 0.25rem;
+  }
+  ul {
+    list-style: disc outside;
+    margin-left: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  ul li::marker { color: var(--border); }
+</style>

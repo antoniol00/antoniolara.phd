@@ -1,0 +1,58 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PublicationList from '../components/PublicationList.astro';
+import { getPublications, publicationTypes } from '../lib/publications';
+
+const publications = await getPublications();
+const groups = Object.entries(publicationTypes)
+  .map(([type, label]) => ({
+    label,
+    items: publications.filter((p) => p.data.type === type),
+  }))
+  .filter((g) => g.items.length > 0);
+---
+
+<BaseLayout
+  title="Publications"
+  description="Peer-reviewed publications on AI for cybersecurity by Antonio Lara Gutiérrez."
+>
+  <div class="stack">
+    <header class="page-header">
+      <h1>Publications</h1>
+      <p>
+        Research on AI-driven threat detection, concept drift, adversarial robustness, malware
+        classification and generative cyber deception. Impact factor and quartile from Journal
+        Citation Reports (JCR).
+      </p>
+    </header>
+
+    {
+      groups.map((g) => (
+        <section>
+          <h2 class="group muted">
+            {g.label} <span class="count mono">{g.items.length}</span>
+          </h2>
+          <PublicationList items={g.items} />
+        </section>
+      ))
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+  .group {
+    font-size: 2.25rem;
+    color: var(--fg-mute);
+    margin-bottom: 1rem;
+  }
+  .count {
+    font-size: 0.8rem;
+    vertical-align: middle;
+    color: var(--accent);
+  }
+</style>

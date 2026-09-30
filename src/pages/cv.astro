@@ -1,0 +1,164 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import Timeline from '../components/Timeline.astro';
+import PublicationList from '../components/PublicationList.astro';
+import {
+  awards,
+  education,
+  industryExperience,
+  languages,
+  researchExperience,
+  researchProfile,
+  skills,
+  teaching,
+} from '../data/cv';
+import { getPublications } from '../lib/publications';
+import { url } from '../lib/url';
+
+const publications = await getPublications();
+const pdf = url('/cv-antonio-lara-gutierrez.pdf');
+---
+
+<BaseLayout title="CV" description="Curriculum Vitae of Antonio Lara Gutiérrez.">
+  <div class="stack">
+    <header class="page-header split">
+      <div class="head">
+        <h1>CV</h1>
+        <p>{researchProfile}</p>
+      </div>
+      <div class="downloads">
+        <a class="button" href={pdf} download>
+          <Icon name="file-down" size={16} /> Download PDF
+        </a>
+        <a class="view muted" href={pdf} target="_blank" rel="noopener">View in browser</a>
+      </div>
+    </header>
+
+    <section>
+      <h2>Education</h2>
+      <Timeline items={education} />
+    </section>
+
+    <section>
+      <h2>Research Experience</h2>
+      <Timeline items={researchExperience} />
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>Publications</h2>
+        <a href={url('/publications')}>By category →</a>
+      </div>
+      <PublicationList items={publications} />
+    </section>
+
+    <section>
+      <h2>Fellowships, Grants &amp; Awards</h2>
+      <Timeline items={awards} />
+    </section>
+
+    <section>
+      <h2>Teaching &amp; Dissemination</h2>
+      <Timeline items={teaching} />
+    </section>
+
+    <section>
+      <h2>Industry Experience</h2>
+      <Timeline items={industryExperience} />
+    </section>
+
+    <section>
+      <h2>Skills</h2>
+      <dl class="rule-list skills">
+        {
+          skills.map((s) => (
+            <div>
+              <dt class="mono">{s.area}</dt>
+              <dd class="soft">{s.items}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </section>
+
+    <section>
+      <h2>Languages</h2>
+      <ul class="rule-list languages">
+        {
+          languages.map((l) => (
+            <li>
+              <span>{l.name}</span>
+              <span class="muted">{l.level}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: 3.5rem;
+  }
+  section > h2 {
+    font-size: 1.875rem;
+    margin-bottom: 1.5rem;
+  }
+  .section-head {
+    margin-bottom: 1.5rem;
+  }
+  .head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .head p {
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+  .downloads {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .view {
+    font-size: 0.8rem;
+  }
+  .view:hover { color: var(--fg); opacity: 1; }
+
+  .skills > div {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+    padding-block: 0.75rem;
+    font-size: 0.875rem;
+  }
+  .skills > div + div { border-top: 1px solid var(--border); }
+  @media (min-width: 768px) {
+    .skills > div {
+      grid-template-columns: 11rem 1fr;
+      gap: 2rem;
+    }
+  }
+  dl, dd { margin: 0; }
+  dt {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    padding-top: 0.15rem;
+  }
+
+  .languages > li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 0.75rem;
+    font-size: 0.875rem;
+  }
+</style>

@@ -25,7 +25,7 @@ const publications = defineCollection({
     status: z.string().optional(),
     doi: z.string().optional(),
     pdf: z.string().optional(),
-    url: z.string().url().optional(),
+    url: z.url().optional(),
     selected: z.boolean().default(false),
   }),
 });

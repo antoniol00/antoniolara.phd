@@ -1,3 +1,227 @@
 ---
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import PublicationList from '../components/PublicationList.astro';
+import { site, socials } from '../data/site';
+import { news, researchInterests } from '../data/cv';
+import { getPublications } from '../lib/publications';
+import { url } from '../lib/url';
+import profile from '../assets/profile.png';
+
+const selected = (await getPublications()).filter((p) => p.data.selected);
 ---
-<html lang="en"><body><h1>Antonio Lara Gutiérrez</h1></body></html>
+
+<BaseLayout title="About">
+  <div class="stack">
+    <section class="hero">
+      <div class="intro">
+        <span class="eyebrow">PhD Candidate · AI for Cybersecurity</span>
+        <h1>
+          {site.firstName} <span class="italic accent">{site.lastName}</span>
+        </h1>
+        <p class="affiliation soft">
+          FPU Predoctoral Researcher at{' '}
+          <a href="https://www.nics.uma.es/" target="_blank" rel="noopener">NICS Lab</a>,{' '}
+          <a href="https://www.uma.es/" target="_blank" rel="noopener">University of Málaga</a> ·
+          Málaga, Spain.
+        </p>
+
+        <div class="bio">
+          <p>
+            My research lies at the intersection of <strong>Artificial Intelligence</strong> and <strong>Cybersecurity</strong>.
+            I work on <strong>concept-drift</strong> detection and adaptation in AI-driven threat detection
+            systems, <strong>multimodal malware</strong> classification and attribution through static,
+            dynamic and visual feature fusion, <strong>generative models</strong> (GANs and LLMs) for
+            adversarial robustness of intrusion detection and adaptive cyber deception, and <strong>LLM agents</strong>
+            for automated threat intelligence.
+          </p>
+          <p>
+            My goal is to build robust, verifiable and maintainable AI defenses against advanced
+            cyber threats.
+          </p>
+        </div>
+
+        <ul class="interests">
+          {researchInterests.map((i) => <li class="tag">{i}</li>)}
+        </ul>
+
+        <div class="actions">
+          <div class="socials">
+            {
+              socials.map((s) => (
+                <a
+                  href={s.href}
+                  aria-label={s.label}
+                  target={s.name === 'email' ? undefined : '_blank'}
+                  rel="noopener noreferrer"
+                >
+                  <Icon name={s.icon} size={20} />
+                </a>
+              ))
+            }
+          </div>
+          <a class="button" href={url('/cv-antonio-lara-gutierrez.pdf')} download>
+            <Icon name="file-down" size={16} /> Download CV
+          </a>
+        </div>
+      </div>
+
+      <figure class="portrait">
+        <div class="frame">
+          <Image
+            src={profile}
+            alt={`Portrait of ${site.name}`}
+            width={512}
+            height={512}
+            loading="eager"
+          />
+        </div>
+        <figcaption class="muted">
+          NICS Lab · ETSI Informática<br />
+          University of Málaga<br />
+          Málaga, Spain
+        </figcaption>
+      </figure>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>News</h2>
+      </div>
+      <ul class="rule-list news">
+        {
+          news.map((n) => (
+            <li>
+              <time class="mono muted">{n.date}</time>
+              <p class="soft">{n.text}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    {
+      selected.length > 0 && (
+        <section>
+          <div class="section-head">
+            <h2>Selected Publications</h2>
+            <a href={url('/publications')}>View all →</a>
+          </div>
+          <PublicationList items={selected} />
+        </section>
+      )
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: 5rem;
+  }
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    align-items: center;
+  }
+  @media (min-width: 768px) {
+    .hero {
+      grid-template-columns: 1fr auto;
+      gap: 3.5rem;
+    }
+  }
+  .intro {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-width: var(--prose-width);
+  }
+  h1 {
+    font-size: 3.25rem;
+    line-height: 1.05;
+  }
+  @media (min-width: 768px) {
+    h1 { font-size: 4.25rem; }
+  }
+  .affiliation {
+    font-size: 1.125rem;
+    line-height: 1.6;
+  }
+  .bio {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    font-size: 0.98rem;
+    line-height: 1.75;
+    padding-top: 0.25rem;
+  }
+  .bio strong { font-weight: 600; }
+  .interests {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.5rem;
+    padding-top: 0.5rem;
+  }
+  .socials {
+    display: flex;
+    gap: 1rem;
+  }
+  .socials a { color: var(--fg-mute); }
+  .socials a:hover { color: var(--accent); opacity: 1; }
+
+  .portrait {
+    margin: 0 auto;
+    width: 16rem;
+  }
+  @media (min-width: 768px) {
+    .portrait { margin: 0; }
+  }
+  .frame {
+    position: relative;
+  }
+  .frame::before {
+    content: '';
+    position: absolute;
+    inset: -0.5rem;
+    border-radius: 1rem;
+    background-color: var(--bg-tint);
+    border: 1px solid var(--border);
+    z-index: -1;
+  }
+  .frame :global(img) {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 0.75rem;
+    border: 1px solid var(--border);
+  }
+  figcaption {
+    margin-top: 1.25rem;
+    font-size: 0.75rem;
+    line-height: 1.6;
+    text-align: center;
+  }
+
+  .news > li {
+    display: grid;
+    grid-template-columns: 5.5rem 1fr;
+    gap: 1rem;
+    padding-block: 0.75rem;
+    font-size: 0.875rem;
+  }
+  .news time {
+    font-size: 0.75rem;
+    padding-top: 0.15rem;
+  }
+</style>
