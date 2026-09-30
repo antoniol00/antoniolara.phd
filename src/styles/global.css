@@ -13,6 +13,9 @@
   --accent-soft: #3d6591;
   --accent-tint: #e9eff6;
   --highlight: #f0e8d8;
+  /* Text on top of --accent backgrounds; logos always sit on white. */
+  --on-accent: #ffffff;
+  --logo-bg: #ffffff;
 
   --font-sans: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-serif: 'Charis SIL', Charter, 'Bitstream Charter', Georgia, serif;
@@ -25,6 +28,34 @@
 
   --page-width: 60rem;
   --prose-width: 68ch;
+  color-scheme: light;
+}
+
+/* Dark theme: deep navy night, light-blue accents. Set via html[data-theme]. */
+:root[data-theme='dark'] {
+  --bg: #0d1520;
+  --bg-soft: #152131;
+  --bg-tint: #111b28;
+  --fg: #e5ebf2;
+  --fg-soft: #b4c0cd;
+  --fg-mute: #7f8d9e;
+  --border: #213043;
+  --border-strong: #2f4359;
+  --accent: #a9cbef;
+  --accent-strong: #d0e4f8;
+  --accent-soft: #7fb0e3;
+  --accent-tint: #172a40;
+  --highlight: #3b3020;
+  --on-accent: #0d1520;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35), 0 1px 3px rgb(0 0 0 / 0.25);
+  --shadow-md: 0 8px 20px -6px rgb(0 0 0 / 0.55), 0 2px 6px -2px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 20px 44px -12px rgb(0 0 0 / 0.7), 0 4px 12px -4px rgb(0 0 0 / 0.45);
+  color-scheme: dark;
+}
+
+body {
+  transition: background-color 0.4s var(--ease), color 0.4s var(--ease);
 }
 
 *,
@@ -86,7 +117,7 @@ a {
 }
 a:hover { color: var(--accent); }
 
-::selection { background-color: rgb(27 58 92 / 0.15); }
+::selection { background-color: color-mix(in srgb, var(--accent) 22%, transparent); }
 
 :focus-visible {
   outline: 2px solid var(--accent-soft);
@@ -226,7 +257,7 @@ a.pill:hover {
   border-radius: 6px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--on-accent);
   background-color: var(--accent);
   white-space: nowrap;
   align-self: flex-start;
@@ -234,7 +265,7 @@ a.pill:hover {
   transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), background-color 0.25s var(--ease);
 }
 .button:hover {
-  color: #fff;
+  color: var(--on-accent);
   background-color: var(--accent-strong);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
@@ -312,3 +343,46 @@ a.pill:hover {
 [data-cat='event'] { --cat: #b3477d; --cat-bg: #f9e6ef; --cat-fg: #8a2f5c; }
 [data-cat='teaching'] { --cat: #6b8e23; --cat-bg: #eef4df; --cat-fg: #4f6b17; }
 [data-cat='other'] { --cat: #5f6f82; --cat-bg: #eceff3; --cat-fg: #465465; }
+
+/* In dark mode, derive tints from each category's solid colour. */
+:root[data-theme='dark'] [data-cat] {
+  --cat-bg: color-mix(in srgb, var(--cat) 22%, #0d1520);
+  --cat-fg: color-mix(in srgb, var(--cat) 55%, #ffffff);
+}
+
+/* ---------- view transitions ---------- */
+/* Theme switch: the new theme is revealed with a circle (see SiteHeader). */
+:root.theme-switching::view-transition-old(root),
+:root.theme-switching::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+/* The active-page underline glides between menu items. */
+::view-transition-group(nav-indicator) {
+  animation-duration: 0.45s;
+  animation-timing-function: var(--ease);
+}
+/* Page changes: content fades and rises; the header stays put. */
+:root::view-transition-old(root) {
+  animation: 200ms ease both vt-out;
+}
+:root::view-transition-new(root) {
+  animation: 420ms var(--ease) both vt-in;
+}
+@keyframes vt-out {
+  to { opacity: 0; transform: translateY(-8px); }
+}
+@keyframes vt-in {
+  from { opacity: 0; transform: translateY(14px); }
+}
+::view-transition-group(*) {
+  animation-duration: 0.5s;
+  animation-timing-function: var(--ease);
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

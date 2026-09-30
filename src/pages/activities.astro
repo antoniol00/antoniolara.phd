@@ -118,6 +118,7 @@ for (const entry of activities) {
                       <li
                         class="entry"
                         id={entry.id}
+                        transition:name={`act-${entry.id}`}
                         data-entry
                         data-start={entry.data.date}
                         data-year={start.year}
@@ -418,7 +419,7 @@ for (const entry of activities) {
     --cat-fg: var(--accent);
   }
   .chip.all[aria-pressed='true'] {
-    color: #fff;
+    color: var(--on-accent);
     background-color: var(--accent);
     border-color: var(--accent);
   }
@@ -535,7 +536,7 @@ for (const entry of activities) {
     justify-content: center;
     height: 3.5rem;
     border-radius: 10px;
-    background-color: #fff;
+    background-color: var(--bg);
     color: var(--cat-fg);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cat) 30%, transparent);
     line-height: 1;

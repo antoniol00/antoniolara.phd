@@ -426,7 +426,7 @@ const events = Astro.props.items.map((n) => ({
   }
   .grid :global(.day.range) {
     border-radius: 0;
-    background-color: color-mix(in srgb, var(--cat) 78%, white);
+    background-color: color-mix(in srgb, var(--cat) 78%, var(--bg));
   }
   .grid :global(.day.range.range-start) { border-radius: 999px 0 0 999px; background-color: var(--cat); }
   .grid :global(.day.range.range-end) { border-radius: 0 999px 999px 0; background-color: var(--cat); }
@@ -442,7 +442,7 @@ const events = Astro.props.items.map((n) => ({
     width: 6px;
     height: 6px;
     border-radius: 999px;
-    background-color: #fff;
+    background-color: var(--bg);
     box-shadow: 0 0 0 1.5px var(--cat);
   }
   .grid :global(.day.long),
@@ -575,8 +575,8 @@ const events = Astro.props.items.map((n) => ({
     transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
   }
   .years :global(.month:hover) { transform: scale(1.15); }
-  .years :global(.month.level-1) { background-color: #b9cbe0; color: var(--accent); }
-  .years :global(.month.level-2) { background-color: var(--accent-soft); color: #fff; }
-  .years :global(.month.level-3) { background-color: var(--accent); color: #fff; }
+  .years :global(.month.level-1) { background-color: color-mix(in srgb, var(--accent) 32%, var(--bg)); color: var(--accent); }
+  .years :global(.month.level-2) { background-color: var(--accent-soft); color: var(--on-accent); }
+  .years :global(.month.level-3) { background-color: var(--accent); color: var(--on-accent); }
   .years :global(.month.current) { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--accent); }
 </style>

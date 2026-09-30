@@ -35,7 +35,7 @@ const rendered = await Promise.all(projects.map(async (p) => ({ p, Content: (awa
           <li class="card">
             <div class="top">
               <span class="eyebrow">{p.data.year}</span>
-              {p.data.featured && <span class="featured">Featured</span>}
+              {p.data.featured && <span class="featured" data-cat="award">Featured</span>}
             </div>
             <h2>
               {p.data.repo ? (
@@ -125,8 +125,8 @@ const rendered = await Promise.all(projects.map(async (p) => ({ p, Content: (awa
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: #8a5a00;
-    background-color: var(--highlight);
+    color: var(--cat-fg);
+    background-color: var(--cat-bg);
     padding: 0.1rem 0.5rem;
     border-radius: 3px;
   }
