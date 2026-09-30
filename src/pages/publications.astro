@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PublicationList from '../components/PublicationList.astro';
+import PublicationStats from '../components/PublicationStats.astro';
 import { getPublications, publicationTypes } from '../lib/publications';
 
 const publications = await getPublications();
@@ -26,6 +27,8 @@ const groups = Object.entries(publicationTypes)
         Citation Reports (JCR).
       </p>
     </header>
+
+    <PublicationStats items={publications} />
 
     {
       groups.map((g) => (
