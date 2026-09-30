@@ -15,10 +15,10 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # Project page URL. When the custom domain is ready, set
-  # SITE_URL to https://<domain> and BASE_PATH to "/", and add public/CNAME.
+  # User site served at the root. When the custom domain is ready, set
+  # SITE_URL to https://<domain> and add public/CNAME.
   SITE_URL: https://antoniol00.github.io
-  BASE_PATH: /antoniolara.github.io
+  BASE_PATH: /
 
 jobs:
   build:
