@@ -2,9 +2,9 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from '../components/Icon.astro';
 import { getGallery } from '../lib/gallery';
+import { url } from '../lib/url';
 
 const gallery = getGallery();
-const total = gallery.reduce((n, g) => n + g.photos.length, 0);
 ---
 
 <BaseLayout title="Gallery" description="Photographs by Antonio Lara Gutiérrez, grouped by country.">
@@ -13,7 +13,7 @@ const total = gallery.reduce((n, g) => n + g.photos.length, 0);
       <span class="eyebrow">Photography</span>
       <h1>Gallery</h1>
       <p>
-        Photographs taken along the way, grouped by country. All photos are hosted on
+        Photographs taken along the way, grouped by country. All photos are hosted on{' '}
         <a href="https://www.flickr.com/" target="_blank" rel="noopener">Flickr</a>.
       </p>
       {
@@ -21,9 +21,9 @@ const total = gallery.reduce((n, g) => n + g.photos.length, 0);
           <nav class="countries" aria-label="Countries">
             {gallery.map((g) => (
               <a class="chip" href={`#${g.slug}`}>
-                <span class="flag" aria-hidden="true">{g.flag}</span>
+                <img class="flag" src={url(`/flags/${g.flag}.svg`)} alt="" width="20" height="14" />
                 {g.name}
-                <span class="n">{g.photos.length}</span>
+                <span class="n">{g.photos.length || 'soon'}</span>
               </a>
             ))}
           </nav>
@@ -31,19 +31,32 @@ const total = gallery.reduce((n, g) => n + g.photos.length, 0);
       }
     </header>
 
-    {total === 0 && <p class="muted italic">Photos coming soon.</p>}
-
     {
       gallery.map((g) => (
         <section id={g.slug} class="country">
           <div class="section-head" data-reveal>
             <h2>
-              <span class="flag" aria-hidden="true">{g.flag}</span> {g.name}
+              <img class="flag" src={url(`/flags/${g.flag}.svg`)} alt="" width="22" height="15" />
+              {g.name}
             </h2>
             <span class="count">
-              {g.photos.length} {g.photos.length === 1 ? 'photo' : 'photos'}
+              {g.photos.length
+                ? `${g.photos.length} ${g.photos.length === 1 ? 'photo' : 'photos'}`
+                : 'Coming soon'}
             </span>
           </div>
+          {g.photos.length === 0 && (
+            <div class="placeholder" data-reveal>
+              <ul class="ph-grid" aria-hidden="true">
+                <li />
+                <li />
+                <li />
+              </ul>
+              <p class="ph-text">
+                <Icon name="map" size={16} /> Photos from {g.name} coming soon
+              </p>
+            </div>
+          )}
           <ul class="photos" data-reveal-stagger="60">
             {g.photos.map((p, i) => (
               <li>
@@ -56,7 +69,7 @@ const total = gallery.reduce((n, g) => n + g.photos.length, 0);
                   data-full={p.full}
                   data-page={p.page}
                   data-title={p.title}
-                  data-place={`${g.flag} ${g.name}`}
+                  data-place={g.name}
                   style={`aspect-ratio: ${p.width} / ${p.height}`}
                 >
                   <img
@@ -198,7 +211,14 @@ const total = gallery.reduce((n, g) => n + g.photos.length, 0);
     font-weight: 600;
     opacity: 0.65;
   }
-  .flag { font-size: 1.05em; }
+  .flag {
+    width: 1.25rem;
+    height: auto;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+    border-radius: 3px;
+    box-shadow: 0 0 0 1px rgb(0 0 0 / 0.08);
+  }
 
   .country { scroll-margin-top: 5.5rem; }
   .section-head h2 {
@@ -206,7 +226,7 @@ const total = gallery.reduce((n, g) => n + g.photos.length, 0);
     align-items: center;
     gap: 0.5rem;
   }
-  .section-head h2 .flag { font-size: 1.2rem; letter-spacing: 0; }
+  .section-head h2 .flag { width: 1.4rem; }
   .count {
     font-size: 0.8rem;
     color: var(--fg-mute);
@@ -270,6 +290,54 @@ const total = gallery.reduce((n, g) => n + g.photos.length, 0);
   .thumb:hover .overlay,
   .thumb:focus-visible .overlay { opacity: 1; }
   .thumb:hover .overlay .title { transform: none; }
+
+  /* ----- placeholder ----- */
+  .placeholder {
+    position: relative;
+  }
+  .ph-grid {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1.4fr 0.8fr 1.2fr;
+    gap: 1rem;
+    height: 10rem;
+  }
+  .ph-grid li {
+    border-radius: 10px;
+    background:
+      linear-gradient(100deg, transparent 20%, color-mix(in srgb, var(--bg) 70%, transparent) 50%, transparent 80%)
+        0 0 / 200% 100% no-repeat,
+      var(--bg-soft);
+    animation: shimmer 2.4s ease-in-out infinite;
+  }
+  .ph-grid li:nth-child(2) { animation-delay: 0.2s; }
+  .ph-grid li:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes shimmer {
+    from { background-position: 150% 0, 0 0; }
+    to { background-position: -50% 0, 0 0; }
+  }
+  .ph-text {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.95rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    color: var(--fg-soft);
+    background-color: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(6px);
+    box-shadow: var(--shadow-sm);
+    white-space: nowrap;
+    transform: translate(-50%, -50%);
+  }
+  @media (max-width: 560px) {
+    .ph-grid { grid-template-columns: 1.3fr 1fr; height: 8rem; }
+    .ph-grid li:nth-child(3) { display: none; }
+  }
 
   /* ----- lightbox ----- */
   dialog {

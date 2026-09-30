@@ -22,10 +22,8 @@ export interface GalleryPhoto extends Photo {
 }
 
 export function getGallery() {
-  return countries
-    .filter((c) => c.photos.length > 0)
-    .map((c) => ({
+  return countries.map((c) => ({
       ...c,
-      photos: c.photos.map<GalleryPhoto>((p) => ({ ...p, thumb: thumbUrl(p.src), full: fullUrl(p.src) })),
-    }));
+    photos: c.photos.map<GalleryPhoto>((p) => ({ ...p, thumb: thumbUrl(p.src), full: fullUrl(p.src) })),
+  }));
 }
