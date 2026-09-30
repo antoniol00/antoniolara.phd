@@ -25,16 +25,10 @@ const svg = `
       <stop offset="1" stop-color="#fff" stop-opacity="0"/>
     </radialGradient>
     <mask id="m"><rect width="${W}" height="${H}" fill="url(#fade)"/></mask>
-    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#a9cbef"/>
-      <stop offset="0.5" stop-color="#2a8a96"/>
-      <stop offset="1" stop-color="#7b4fa0"/>
-    </linearGradient>
   </defs>
   <rect width="${W}" height="${H}" fill="url(#bg)"/>
   <rect width="${W}" height="${H}" fill="url(#glow)"/>
   <g fill="#a9cbef" fill-opacity="0.22" mask="url(#m)">${dots.join('')}</g>
-  <rect x="${W - 80 - photo - 8}" y="${(H - photo) / 2 - 8}" width="${photo + 16}" height="${photo + 16}" rx="34" fill="url(#ring)"/>
   <text x="80" y="170" font-family="Segoe UI" font-size="20" font-weight="700" letter-spacing="5" fill="#7fb0e3">PHD CANDIDATE · AI FOR CYBERSECURITY</text>
   <text x="76" y="262" font-family="Segoe UI" font-size="78" font-weight="300" fill="#e5ebf2">Antonio</text>
   <text x="76" y="346" font-family="Segoe UI" font-size="78" font-weight="700" fill="#ffffff">Lara Gutiérrez</text>

@@ -73,8 +73,7 @@ const selected = publications.filter((p) => p.data.selected);
         </ul>
       </div>
 
-      <figure class="portrait" data-reveal style="--reveal-delay: 200ms" data-tilt>
-        <div class="halo" aria-hidden="true"></div>
+      <figure class="portrait" data-reveal style="--reveal-delay: 200ms">
         <div class="frame">
           <Image
             src={profile}
@@ -141,26 +140,6 @@ const selected = publications.filter((p) => p.data.selected);
     }
   </div>
 </BaseLayout>
-
-<script>
-  // Gentle 3D tilt of the portrait following the pointer.
-  function initTilt() {
-    const el = document.querySelector<HTMLElement>('[data-tilt]');
-    if (!el || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    el.addEventListener('pointermove', (e) => {
-      const r = el.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width - 0.5;
-      const y = (e.clientY - r.top) / r.height - 0.5;
-      el.style.setProperty('--ry', `${x * 10}deg`);
-      el.style.setProperty('--rx', `${-y * 10}deg`);
-    });
-    el.addEventListener('pointerleave', () => {
-      el.style.setProperty('--ry', '0deg');
-      el.style.setProperty('--rx', '0deg');
-    });
-  }
-  document.addEventListener('astro:page-load', initTilt);
-</script>
 
 <style>
   .stack {
@@ -319,56 +298,17 @@ const selected = publications.filter((p) => p.data.selected);
     transform: translate(-50%, 0) scale(1);
   }
 
-  /* Portrait: rotating gradient halo + pointer tilt. */
   .portrait {
-    --rx: 0deg;
-    --ry: 0deg;
-    position: relative;
     margin: 0 auto;
     width: 15.5rem;
-    perspective: 900px;
   }
   @media (min-width: 820px) {
     .portrait { margin: 0; }
   }
-  .halo {
-    position: absolute;
-    inset: -7px;
-    bottom: auto;
-    aspect-ratio: 1;
-    border-radius: 1.3rem;
-    background: conic-gradient(from var(--angle, 0deg), var(--accent), #2a8a96, var(--accent-soft), #7b4fa0, var(--accent));
-    filter: blur(0.5px);
-    opacity: 0.85;
-    animation: spin 10s linear infinite;
-    transform: rotateX(var(--rx)) rotateY(var(--ry));
-    transition: transform 0.4s var(--ease);
-  }
-  .halo::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: inherit;
-    filter: blur(22px);
-    opacity: 0.45;
-  }
-  @property --angle {
-    syntax: '<angle>';
-    initial-value: 0deg;
-    inherits: false;
-  }
-  @keyframes spin {
-    to { --angle: 360deg; }
-  }
   .frame {
-    position: relative;
     border-radius: 1rem;
     overflow: hidden;
     box-shadow: var(--shadow-lg);
-    border: 3px solid var(--bg);
-    transform: rotateX(var(--rx)) rotateY(var(--ry));
-    transition: transform 0.4s var(--ease);
   }
   .frame :global(img) {
     width: 100%;
@@ -377,7 +317,7 @@ const selected = publications.filter((p) => p.data.selected);
     object-fit: cover;
     transition: transform 0.8s var(--ease);
   }
-  .portrait:hover .frame :global(img) { transform: scale(1.04); }
+  .frame:hover :global(img) { transform: scale(1.04); }
   figcaption {
     display: flex;
     flex-direction: column;
