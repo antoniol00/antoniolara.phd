@@ -1,20 +1,29 @@
-/* Editorial warm-paper theme: serif display, sans body, mono labels. */
+/* Clean academic theme matching the PDF CV: navy accents, Source Sans 3 + Charter-style serif. */
 :root {
-  --bg: #f5f0e8;
-  --bg-soft: #ebe3d5;
-  --bg-tint: #faf5ec;
-  --fg: #1a1613;
-  --fg-soft: #4a4139;
-  --fg-mute: #8a8176;
-  --border: #d8cdba;
-  --accent: #c15f3c;
-  --accent-soft: #dc815c;
+  --bg: #ffffff;
+  --bg-soft: #f4f6f9;
+  --bg-tint: #f9fafc;
+  --fg: #1c2530;
+  --fg-soft: #46525f;
+  --fg-mute: #7a8899;
+  --border: #e1e6ec;
+  --border-strong: #c9d2dc;
+  --accent: #1b3a5c;
+  --accent-strong: #122a44;
+  --accent-soft: #3d6591;
+  --accent-tint: #e9eff6;
+  --highlight: #f0e8d8;
 
-  --font-serif: 'Cormorant Garamond', Garamond, 'Times New Roman', serif;
-  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --font-sans: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-serif: 'Charis SIL', Charter, 'Bitstream Charter', Georgia, serif;
+  --font-mono: 'Source Code Pro', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
-  --page-width: 58rem;
+  --shadow-sm: 0 1px 2px rgb(18 42 68 / 0.06), 0 1px 3px rgb(18 42 68 / 0.05);
+  --shadow-md: 0 6px 16px -4px rgb(18 42 68 / 0.12), 0 2px 6px -2px rgb(18 42 68 / 0.08);
+  --shadow-lg: 0 18px 40px -12px rgb(18 42 68 / 0.28), 0 4px 12px -4px rgb(18 42 68 / 0.12);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --page-width: 60rem;
   --prose-width: 68ch;
 }
 
@@ -28,6 +37,7 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
 }
 
 body {
@@ -35,7 +45,7 @@ body {
   background-color: var(--bg);
   color: var(--fg);
   font-family: var(--font-sans);
-  font-feature-settings: 'ss01', 'cv11';
+  font-size: 1.0625rem;
   line-height: 1.6;
 }
 
@@ -44,14 +54,19 @@ h2,
 h3,
 h4 {
   margin: 0;
-  font-family: var(--font-serif);
-  font-weight: 500;
+  font-family: var(--font-sans);
   color: var(--fg);
-  letter-spacing: -0.01em;
 }
-h1 { font-size: 3rem; line-height: 1.1; }
-h2 { font-size: 2rem; line-height: 1.2; }
-h3 { font-size: 1.5rem; line-height: 1.3; }
+h1 {
+  font-size: 2.75rem;
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+}
+h1 strong { font-weight: 600; }
+h2 { font-size: 1.5rem; font-weight: 600; line-height: 1.25; }
+h3 { font-size: 1.125rem; font-weight: 600; line-height: 1.35; }
 
 p { margin: 0; }
 
@@ -64,16 +79,16 @@ ol {
 img { max-width: 100%; display: block; }
 
 a {
-  color: var(--accent);
+  color: var(--accent-soft);
   text-decoration: none;
-  transition: opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: color 0.2s var(--ease), border-color 0.2s var(--ease), background-color 0.2s var(--ease);
 }
-a:hover { opacity: 0.75; }
+a:hover { color: var(--accent); }
 
-::selection { background-color: rgb(193 95 60 / 0.2); }
+::selection { background-color: rgb(27 58 92 / 0.15); }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--accent-soft);
   outline-offset: 3px;
   border-radius: 2px;
 }
@@ -89,19 +104,32 @@ a:hover { opacity: 0.75; }
   .container { padding-inline: 2.5rem; }
 }
 
+.serif { font-family: var(--font-serif); }
 .soft { color: var(--fg-soft); }
 .muted { color: var(--fg-mute); }
 .accent { color: var(--accent); }
 .italic { font-style: italic; }
 .mono { font-family: var(--font-mono); }
 
+/* Small-caps style label, like the CV section headings. */
 .eyebrow {
   display: inline-block;
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 0.75rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
+  color: var(--accent-soft);
+}
+
+.section-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
   color: var(--accent);
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-strong);
+  margin-bottom: 1.5rem;
 }
 
 .rule-list {
@@ -116,23 +144,37 @@ a:hover { opacity: 0.75; }
   align-items: baseline;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1.25rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-strong);
+  margin-bottom: 1.5rem;
 }
-.section-head h2 { font-size: 1.875rem; }
+.section-head h2 {
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+}
 .section-head a {
   font-size: 0.875rem;
   color: var(--fg-mute);
 }
-.section-head a:hover { color: var(--fg); opacity: 1; }
+.section-head a:hover { color: var(--accent); }
 
 .page-header {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  padding-bottom: 1.5rem;
+  padding-bottom: 2rem;
   border-bottom: 1px solid var(--border);
 }
-.page-header p { max-width: var(--prose-width); color: var(--fg-soft); }
+.page-header p {
+  max-width: var(--prose-width);
+  color: var(--fg-soft);
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  line-height: 1.7;
+}
 @media (min-width: 768px) {
   .page-header.split {
     flex-direction: row;
@@ -145,47 +187,76 @@ a:hover { opacity: 0.75; }
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.25rem 0.65rem;
+  padding: 0.2rem 0.6rem;
   border: 1px solid var(--border);
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: var(--fg-soft);
   line-height: 1.4;
+  background-color: var(--bg);
 }
 a.pill:hover {
   color: var(--accent);
-  border-color: var(--accent);
-  opacity: 1;
+  border-color: var(--accent-soft);
+  background-color: var(--accent-tint);
 }
-.pill.mono { font-family: var(--font-mono); }
+.pill.mono { font-family: var(--font-mono); font-size: 0.72rem; }
+
+/* JCR-like badge from the CV */
+.badge-jcr {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 3px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background-color: var(--accent-tint);
+  color: var(--accent);
+}
+.badge-jcr span { font-weight: 400; color: var(--fg-mute); }
 
 .button {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  font-size: 0.875rem;
-  color: var(--fg);
+  padding: 0.55rem 1.1rem;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  background-color: var(--accent);
   white-space: nowrap;
   align-self: flex-start;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), background-color 0.25s var(--ease);
 }
 .button:hover {
+  color: #fff;
+  background-color: var(--accent-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+.button.ghost {
   color: var(--accent);
+  background-color: transparent;
+  border-color: var(--border-strong);
+  box-shadow: none;
+}
+.button.ghost:hover {
   border-color: var(--accent);
-  opacity: 1;
+  background-color: var(--accent-tint);
 }
 
 .tag {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--fg-mute);
-  padding: 0.1rem 0.4rem;
-  border: 1px solid var(--border);
-  border-radius: 2px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+  padding: 0.15rem 0.55rem;
+  background-color: var(--accent-tint);
+  border-radius: 999px;
 }
 
 .sr-only {
@@ -198,4 +269,31 @@ a.pill:hover {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* ---------- motion ---------- */
+
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+      opacity 0.7s var(--ease),
+      transform 0.7s var(--ease);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  [data-reveal].is-visible {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

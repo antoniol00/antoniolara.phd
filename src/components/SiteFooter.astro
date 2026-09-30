@@ -29,6 +29,7 @@ const year = new Date().getFullYear();
   .site-footer {
     margin-top: 6rem;
     border-top: 1px solid var(--border);
+    background-color: var(--bg-tint);
   }
   .inner {
     display: flex;
@@ -46,6 +47,12 @@ const year = new Date().getFullYear();
     display: flex;
     gap: 1rem;
   }
-  .links a { color: var(--fg-mute); }
-  .links a:hover { color: var(--fg); opacity: 1; }
+  .links a {
+    color: var(--fg-mute);
+    transition: color 0.2s var(--ease), transform 0.25s var(--ease);
+  }
+  .links a:hover {
+    color: var(--accent);
+    transform: translateY(-2px);
+  }
 </style>
