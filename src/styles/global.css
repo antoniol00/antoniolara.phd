@@ -298,3 +298,17 @@ a.pill:hover {
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------- activity categories ---------- */
+/* Each category sets --cat (solid), --cat-bg (tint) and --cat-fg (text on tint). */
+[data-cat] { --cat: #1b3a5c; --cat-bg: #e9eff6; --cat-fg: #1b3a5c; }
+[data-cat='publication'] { --cat: #2f5d8a; --cat-bg: #e4edf7; --cat-fg: #1f4a75; }
+[data-cat='conference'] { --cat: #5046a8; --cat-bg: #ebe9fa; --cat-fg: #3b3591; }
+[data-cat='talk'] { --cat: #2f855a; --cat-bg: #e1f2e8; --cat-fg: #22603f; }
+[data-cat='award'] { --cat: #c08a1e; --cat-bg: #f8eed8; --cat-fg: #7f5400; }
+[data-cat='research-stay'] { --cat: #7b4fa0; --cat-bg: #f0e8f7; --cat-fg: #613c82; }
+[data-cat='competition'] { --cat: #c5563a; --cat-bg: #fbe8e1; --cat-fg: #963a1e; }
+[data-cat='training'] { --cat: #2a8a96; --cat-bg: #dff1f3; --cat-fg: #1f5f69; }
+[data-cat='event'] { --cat: #b3477d; --cat-bg: #f9e6ef; --cat-fg: #8a2f5c; }
+[data-cat='teaching'] { --cat: #6b8e23; --cat-bg: #eef4df; --cat-fg: #4f6b17; }
+[data-cat='other'] { --cat: #5f6f82; --cat-bg: #eceff3; --cat-fg: #465465; }

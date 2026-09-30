@@ -44,6 +44,7 @@ const events = Astro.props.items.map((n) => ({
    *   in:  activities:highlight {id|null, start?} – a card is hovered
    *        activities:show-year {year}     – feed switched year (tabs)
    *        activities:focused {ids}        – feed focused these cards
+   *        activities:filter {categories}  – only show these categories (empty = all)
    */
   interface CalEvent {
     id: string;
@@ -81,7 +82,13 @@ const events = Astro.props.items.map((n) => ({
       const inMonth = byMonth.get(mk) ?? [];
       if (!inMonth.includes(e)) byMonth.set(mk, [...inMonth, e]);
     };
+    let categories = new Set<string>();
+    const buildIndex = () => {
+    byDay.clear();
+    byMonth.clear();
+    longEvents.clear();
     for (const e of events) {
+      if (categories.size && !categories.has(e.category)) continue;
       const [y, m, d] = e.start.split('-').map(Number);
       if (!d) {
         addMonth(`${y}-${pad(m)}`, e);
@@ -97,6 +104,8 @@ const events = Astro.props.items.map((n) => ({
         addMonth(key.slice(0, 7), e);
       }
     }
+    };
+    buildIndex();
 
     const latest = events[0]?.start.split('-').map(Number) ?? [new Date().getFullYear(), new Date().getMonth() + 1];
     let viewYear = latest[0];
@@ -153,8 +162,10 @@ const events = Astro.props.items.map((n) => ({
           const names = dayEvents.map((e) => e.title);
           cell.title = names.join('\n');
           cell.setAttribute('aria-label', `${d} ${MONTHS[viewMonth - 1]}: ${names.join(', ')}`);
-          // Prefer short events over long ranges when a day has both.
+          // Prefer short events over long ranges when a day has both; colour by that event.
           const ordered = [...dayEvents].sort((a, b) => Number(longEvents.has(a)) - Number(longEvents.has(b)));
+          cell.dataset.cat = ordered[0].category;
+          if (new Set(dayEvents.map((e) => e.category)).size > 1) cell.classList.add('multi');
           cell.addEventListener('click', () => emit('activities:select', { ids: ordered.map((e) => e.id) }));
         }
         grid.append(cell);
@@ -173,9 +184,10 @@ const events = Astro.props.items.map((n) => ({
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.dataset.id = e.id;
+        btn.dataset.cat = e.category;
         const [sy, sm, sd] = e.start.split('-').map(Number);
         const startsHere = sy === viewYear && sm === viewMonth;
-        btn.innerHTML = `<span class="when">${sd && startsHere ? sd : '·'}</span><span class="what"></span>`;
+        btn.innerHTML = `<span class="dot"></span><span class="when">${sd && startsHere ? sd : '·'}</span><span class="what"></span>`;
         btn.querySelector('.what')!.textContent = e.title;
         btn.addEventListener('click', () => emit('activities:select', { ids: [e.id] }));
         li.append(btn);
@@ -205,6 +217,7 @@ const events = Astro.props.items.map((n) => ({
     }
 
     // Year overview: one row per year, 12 month cells shaded by activity.
+    const buildYears = () => {
     years.querySelectorAll('.year-row').forEach((r) => r.remove());
     const allYears = events.map((e) => Number(e.start.slice(0, 4)));
     const maxYear = Math.max(...allYears, viewYear);
@@ -236,6 +249,8 @@ const events = Astro.props.items.map((n) => ({
       row.append(months);
       years.append(row);
     }
+    };
+    buildYears();
 
     root.querySelector('[data-prev]')!.addEventListener('click', () => go(-1), { signal });
     root.querySelector('[data-next]')!.addEventListener('click', () => go(1), { signal });
@@ -272,6 +287,17 @@ const events = Astro.props.items.map((n) => ({
           if (y !== viewYear || m !== viewMonth) show(y, m, { announce: false });
         }
         paintMarks();
+      },
+      { signal },
+    );
+
+    document.addEventListener(
+      'activities:filter',
+      (ev) => {
+        categories = new Set((ev as CustomEvent<{ categories: string[] }>).detail.categories);
+        buildIndex();
+        buildYears();
+        render();
       },
       { signal },
     );
@@ -390,34 +416,49 @@ const events = Astro.props.items.map((n) => ({
   .grid :global(.day.has-event) {
     color: #fff;
     font-weight: 600;
-    background-color: var(--accent);
+    background-color: var(--cat);
     cursor: pointer;
     transition: transform 0.25s var(--ease), background-color 0.25s var(--ease);
   }
   .grid :global(.day.has-event:hover) {
-    background-color: var(--accent-strong);
+    filter: brightness(0.88);
     transform: scale(1.1);
   }
   .grid :global(.day.range) {
     border-radius: 0;
-    background-color: var(--accent-soft);
+    background-color: color-mix(in srgb, var(--cat) 78%, white);
   }
-  .grid :global(.day.range.range-start) { border-radius: 999px 0 0 999px; background-color: var(--accent); }
-  .grid :global(.day.range.range-end) { border-radius: 0 999px 999px 0; background-color: var(--accent); }
-  .grid :global(.day.range:hover) { transform: none; background-color: var(--accent-strong); }
+  .grid :global(.day.range.range-start) { border-radius: 999px 0 0 999px; background-color: var(--cat); }
+  .grid :global(.day.range.range-end) { border-radius: 0 999px 999px 0; background-color: var(--cat); }
+  .grid :global(.day.range.range-start.range-end) { border-radius: 999px; }
+  .grid :global(.day.range:hover) { transform: none; }
+  /* Several kinds of activity on the same day: small marker. */
+  .grid :global(.day.multi) { position: relative; }
+  .grid :global(.day.multi::after) {
+    content: '';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background-color: #fff;
+    box-shadow: 0 0 0 1.5px var(--cat);
+  }
   .grid :global(.day.long),
   .grid :global(.day.long.range),
   .grid :global(.day.long.range-start),
   .grid :global(.day.long.range-end) {
-    color: var(--accent);
+    color: var(--cat-fg);
     font-weight: 500;
-    background-color: var(--accent-tint);
+    background-color: var(--cat-bg);
   }
-  .grid :global(.day.long:hover) { background-color: #d4e0ed; }
+  .grid :global(.day.long:hover) { filter: brightness(0.95); }
   .grid :global(.day.hl) {
     color: #fff;
-    background-color: var(--accent-strong);
-    box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent-soft);
+    background-color: var(--cat);
+    filter: brightness(0.85);
+    box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--cat);
     transform: scale(1.08);
     position: relative;
     z-index: 1;
@@ -428,7 +469,8 @@ const events = Astro.props.items.map((n) => ({
   }
   .grid :global(.day.long.hl) {
     color: #fff;
-    background-color: var(--accent-soft);
+    background-color: var(--cat);
+    filter: none;
     box-shadow: none;
     transform: none;
   }
@@ -462,6 +504,20 @@ const events = Astro.props.items.map((n) => ({
   .month-events :global(button:hover) {
     background-color: var(--accent-tint);
     color: var(--accent);
+  }
+  .month-events :global(.dot) {
+    flex-shrink: 0;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 999px;
+    background-color: var(--cat);
+    transform: translateY(-1px);
+  }
+  .month-events :global(button) { align-items: center; }
+  .month-events :global(button.hl),
+  .month-events :global(button:hover) {
+    background-color: var(--cat-bg);
+    color: var(--cat-fg);
   }
   .month-events :global(.when) {
     min-width: 1.4rem;

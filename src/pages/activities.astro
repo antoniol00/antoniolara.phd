@@ -25,6 +25,10 @@ interface Rendered {
   end?: ReturnType<typeof parseDate>;
 }
 
+const categories = Object.entries(categoryLabels)
+  .map(([key, label]) => ({ key, label, count: activities.filter((a) => a.data.category === key).length }))
+  .filter((c) => c.count > 0);
+
 // year → month → entries, newest first (activities are already sorted).
 const years: { year: number; months: { key: string; label: string; entries: Rendered[] }[] }[] = [];
 for (const entry of activities) {
@@ -59,6 +63,19 @@ for (const entry of activities) {
       </div>
 
       <div class="feed" data-activity-feed>
+        <div class="filters" role="group" aria-label="Filter by type">
+          <button type="button" class="chip all" aria-pressed="true" data-filter-all>
+            All <span class="n">{activities.length}</span>
+          </button>
+          {
+            categories.map((c) => (
+              <button type="button" class="chip" aria-pressed="false" data-filter={c.key} data-cat={c.key}>
+                <span class="dot" aria-hidden="true" />
+                {c.label} <span class="n">{c.count}</span>
+              </button>
+            ))
+          }
+        </div>
         {
           years.length > 0 && (
             <div class="tabs" role="tablist" aria-label="Year">
@@ -73,7 +90,7 @@ for (const entry of activities) {
                   data-year-tab={y.year}
                 >
                   {y.year}
-                  <span class="tab-count">
+                  <span class="tab-count" data-tab-count>
                     {y.months.reduce((n, m) => n + m.entries.length, 0)}
                   </span>
                 </button>
@@ -92,6 +109,7 @@ for (const entry of activities) {
               hidden={i !== 0}
             >
               <h2 class="sr-only">{y.year}</h2>
+              <p class="no-results" hidden>No activities of the selected types in {y.year}.</p>
               {y.months.map((m) => (
                 <div class="month" id={`m-${m.key}`} data-month={m.key}>
                   <h3 class="month-label" data-reveal>{m.label}</h3>
@@ -103,6 +121,7 @@ for (const entry of activities) {
                         data-entry
                         data-start={entry.data.date}
                         data-year={start.year}
+                        data-cat={entry.data.category}
                         tabindex="-1"
                       >
                         <div class="date" aria-hidden="true">
@@ -120,7 +139,7 @@ for (const entry of activities) {
                         </div>
                         <article class="body">
                           <div class="meta">
-                            <span class:list={['cat', entry.data.category]}>
+                            <span class="cat">
                               {categoryLabels[entry.data.category]}
                             </span>
                             <time datetime={entry.data.date}>{formatRange(start, end)}</time>
@@ -176,6 +195,39 @@ for (const entry of activities) {
     const panels = [...feed.querySelectorAll<HTMLElement>('section[data-year]')];
     const cards = [...feed.querySelectorAll<HTMLElement>('[data-entry]')];
     let activeYear = Number(tabs[0]?.dataset.yearTab);
+    const filterAll = feed.querySelector<HTMLButtonElement>('[data-filter-all]')!;
+    const filterChips = [...feed.querySelectorAll<HTMLButtonElement>('[data-filter]')];
+    const selected = new Set<string>();
+
+    function applyFilter() {
+      const matches = (c: HTMLElement) => selected.size === 0 || selected.has(c.dataset.cat!);
+      for (const c of cards) c.hidden = !matches(c);
+      feed!.querySelectorAll<HTMLElement>('.month[data-month]').forEach((m) => {
+        m.hidden = !m.querySelector('[data-entry]:not([hidden])');
+      });
+      for (const p of panels) {
+        const count = p.querySelectorAll('[data-entry]:not([hidden])').length;
+        p.querySelector<HTMLElement>('.no-results')!.hidden = count > 0;
+        const tab = tabs.find((t) => t.dataset.yearTab === p.dataset.year);
+        const badge = tab?.querySelector<HTMLElement>('[data-tab-count]');
+        if (badge) badge.textContent = String(count);
+        tab?.classList.toggle('empty', count === 0);
+      }
+      filterAll.setAttribute('aria-pressed', String(selected.size === 0));
+      for (const chip of filterChips) chip.setAttribute('aria-pressed', String(selected.has(chip.dataset.filter!)));
+      clearFocus();
+      emit('activities:filter', { categories: [...selected] });
+    }
+
+    filterAll.addEventListener('click', () => { selected.clear(); applyFilter(); }, { signal });
+    for (const chip of filterChips) {
+      chip.addEventListener('click', () => {
+        const key = chip.dataset.filter!;
+        if (selected.has(key)) selected.delete(key);
+        else selected.add(key);
+        applyFilter();
+      }, { signal });
+    }
 
     function showYear(year: number, { announce = true } = {}) {
       if (year === activeYear && !panels.some((p) => p.hidden && Number(p.dataset.year) === year)) return;
@@ -193,7 +245,9 @@ for (const entry of activities) {
     }
 
     function focusCards(ids: string[]) {
-      const targets = ids.map((id) => document.getElementById(id)).filter((el): el is HTMLElement => !!el);
+      const targets = ids
+        .map((id) => document.getElementById(id))
+        .filter((el): el is HTMLElement => !!el && !el.hidden);
       if (!targets.length) return;
       showYear(Number(targets[0].dataset.year));
       for (const c of cards) c.classList.remove('focused');
@@ -321,6 +375,72 @@ for (const entry of activities) {
     transition: transform 0.35s var(--ease);
   }
   .tab:hover { color: var(--accent-soft); }
+  .tab:global(.empty) { opacity: 0.45; }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.25rem;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background-color: var(--bg);
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--fg-soft);
+    cursor: pointer;
+    transition:
+      background-color 0.25s var(--ease),
+      border-color 0.25s var(--ease),
+      color 0.25s var(--ease),
+      transform 0.25s var(--ease);
+  }
+  .chip:hover {
+    border-color: var(--cat);
+    color: var(--cat-fg);
+    transform: translateY(-1px);
+  }
+  .chip[aria-pressed='true'] {
+    color: var(--cat-fg);
+    border-color: var(--cat);
+    background-color: var(--cat-bg);
+    font-weight: 600;
+  }
+  .chip.all {
+    --cat: var(--accent);
+    --cat-bg: var(--accent-tint);
+    --cat-fg: var(--accent);
+  }
+  .chip.all[aria-pressed='true'] {
+    color: #fff;
+    background-color: var(--accent);
+    border-color: var(--accent);
+  }
+  .dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 999px;
+    background-color: var(--cat);
+  }
+  .n {
+    font-size: 0.72rem;
+    font-weight: 600;
+    opacity: 0.7;
+  }
+  .no-results {
+    margin-top: 2rem;
+    font-style: italic;
+    color: var(--fg-mute);
+  }
+  .month[hidden],
+  .entry[hidden],
+  .no-results[hidden] { display: none; }
   .tab[aria-selected='true'] { color: var(--accent); }
   .tab[aria-selected='true']::after { transform: scaleX(1); }
   .tab-count {
@@ -364,8 +484,10 @@ for (const entry of activities) {
     gap: 1rem;
     padding: 1.1rem;
     border: 1px solid var(--border);
+    border-left: 4px solid var(--cat);
     border-radius: 12px;
     background-color: var(--bg);
+    background-image: linear-gradient(90deg, var(--cat-bg), transparent 9rem);
     transition:
       border-color 0.4s var(--ease),
       box-shadow 0.4s var(--ease),
@@ -375,6 +497,7 @@ for (const entry of activities) {
   }
   .entry:hover {
     border-color: var(--border-strong);
+    border-left-color: var(--cat);
     box-shadow: var(--shadow-md);
     transform: translateY(-2px);
   }
@@ -389,19 +512,20 @@ for (const entry of activities) {
     opacity: 0.85;
   }
   .entry:global(.focused) {
-    border-color: var(--accent-soft);
+    border-color: var(--cat);
     background-color: var(--bg-tint);
-    box-shadow: 0 0 0 4px var(--accent-tint), var(--shadow-md);
+    box-shadow: 0 0 0 4px var(--cat-bg), var(--shadow-md);
     animation: pulse 1.6s var(--ease);
   }
   .entry:global(.focused) .date {
     color: #fff;
-    background-color: var(--accent);
+    background-color: var(--cat);
+    box-shadow: none;
   }
   @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgb(61 101 145 / 0.45), var(--shadow-md); transform: scale(1.01); }
-    60% { box-shadow: 0 0 0 12px rgb(61 101 145 / 0), var(--shadow-md); transform: none; }
-    100% { box-shadow: 0 0 0 4px var(--accent-tint), var(--shadow-md); }
+    0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--cat) 45%, transparent), var(--shadow-md); transform: scale(1.01); }
+    60% { box-shadow: 0 0 0 12px color-mix(in srgb, var(--cat) 0%, transparent), var(--shadow-md); transform: none; }
+    100% { box-shadow: 0 0 0 4px var(--cat-bg), var(--shadow-md); }
   }
   .date {
     transition: background-color 0.35s var(--ease);
@@ -411,8 +535,9 @@ for (const entry of activities) {
     justify-content: center;
     height: 3.5rem;
     border-radius: 10px;
-    background-color: var(--accent-tint);
-    color: var(--accent);
+    background-color: #fff;
+    color: var(--cat-fg);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cat) 30%, transparent);
     line-height: 1;
   }
   .day {
@@ -453,16 +578,9 @@ for (const entry of activities) {
     letter-spacing: 0.08em;
     padding: 0.1rem 0.45rem;
     border-radius: 3px;
-    color: var(--accent);
-    background-color: var(--accent-tint);
+    color: var(--cat-fg);
+    background-color: var(--cat-bg);
   }
-  .cat.award { color: #8a5a00; background-color: var(--highlight); }
-  .cat.talk,
-  .cat.teaching { color: #25613f; background-color: #e3f1e8; }
-  .cat.research-stay { color: #6a3f86; background-color: #efe7f6; }
-  .cat.competition { color: #9a3b1f; background-color: #fbe9e2; }
-  .cat.training,
-  .cat.event { color: #2d5f6b; background-color: #e2f1f3; }
   h4 {
     font-size: 1.1rem;
     font-weight: 600;
