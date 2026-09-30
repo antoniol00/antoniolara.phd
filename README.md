@@ -21,8 +21,8 @@ npm run build    # static output in dist/
   home page), `location`, `links`, related `publications`, optional `image`; the body is the detailed text.
 - `src/content/projects/*.md` — one file per project (summary, tags, repo, links, related publications).
 - `src/data/authors.ts` — ORCID iDs of co-authors, linked from author names.
-- `src/assets/gallery/<country>/` — gallery photos, one folder per country (see the README there;
-  optional names/captions in `src/data/gallery.ts`).
+- `src/data/gallery.ts` — gallery photos hosted on Flickr, grouped by country (from each photo's
+  Flickr embed code: page URL, image URL and size). Countries without photos are hidden.
 - `public/cv-antonio-lara-gutierrez.pdf` — downloadable CV (source files in `docs/`).
 
 ## Deployment

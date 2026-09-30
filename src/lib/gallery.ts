@@ -1,56 +1,31 @@
-import type { ImageMetadata } from 'astro';
-import { countries } from '../data/gallery';
+import { countries, type Photo } from '../data/gallery';
 
-const files = import.meta.glob<{ default: ImageMetadata }>(
-  '../assets/gallery/*/*.{jpg,jpeg,png,webp,avif,JPG,JPEG,PNG,WEBP,AVIF}',
-  { eager: true },
-);
+/*
+ * Flickr serves every photo at fixed sizes that share the same secret up to 1024px,
+ * selected by a suffix: _z (640), _c (800), _b (1024). Larger sizes (_h, _k, _o) use a
+ * different secret, so they are only used when the embed already points at them.
+ */
+const SIZED = /_(?:[a-z])\.(jpe?g|png)$/i;
+const base = (src: string) => src.replace(SIZED, '').replace(/\.(jpe?g|png)$/i, '');
+const ext = (src: string) => src.match(/\.(jpe?g|png)$/i)?.[1] ?? 'jpg';
 
-export interface Photo {
-  src: ImageMetadata;
-  file: string;
-  caption: string;
+/** ~800px version for the grid. */
+export const thumbUrl = (src: string) => `${base(src)}_c.${ext(src)}`;
+
+/** Largest version we can safely build for the lightbox. */
+export const fullUrl = (src: string) =>
+  /_[hko]\.(jpe?g|png)$/i.test(src) ? src : `${base(src)}_b.${ext(src)}`;
+
+export interface GalleryPhoto extends Photo {
+  thumb: string;
+  full: string;
 }
 
-export interface CountryGroup {
-  slug: string;
-  name: string;
-  description?: string;
-  photos: Photo[];
-}
-
-const titleCase = (slug: string) =>
-  slug.replace(/[-_]+/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
-
-const captionFromFile = (file: string) =>
-  titleCase(file.replace(/\.[^.]+$/, '').replace(/^\d+[-_ ]*/, ''));
-
-export function getGallery(): CountryGroup[] {
-  const groups = new Map<string, CountryGroup>();
-
-  for (const [path, mod] of Object.entries(files)) {
-    const [slug, file] = path.split('/').slice(-2);
-    const info = countries[slug];
-    if (!groups.has(slug)) {
-      groups.set(slug, {
-        slug,
-        name: info?.name ?? titleCase(slug),
-        description: info?.description,
-        photos: [],
-      });
-    }
-    groups.get(slug)!.photos.push({
-      src: mod.default,
-      file,
-      caption: info?.captions?.[file] ?? captionFromFile(file),
-    });
-  }
-
-  for (const g of groups.values()) g.photos.sort((a, b) => a.file.localeCompare(b.file));
-
-  return [...groups.values()].sort(
-    (a, b) =>
-      (countries[a.slug]?.order ?? Infinity) - (countries[b.slug]?.order ?? Infinity) ||
-      a.name.localeCompare(b.name),
-  );
+export function getGallery() {
+  return countries
+    .filter((c) => c.photos.length > 0)
+    .map((c) => ({
+      ...c,
+      photos: c.photos.map<GalleryPhoto>((p) => ({ ...p, thumb: thumbUrl(p.src), full: fullUrl(p.src) })),
+    }));
 }
