@@ -8,20 +8,20 @@ interface Props {
 const { items } = Astro.props;
 ---
 
-<ol class="timeline">
+<ol class="timeline" data-reveal-stagger="80">
   {
     items.map((e) => (
       <li>
-        <div class="period mono muted">{e.period}</div>
+        <div class="period">{e.period}</div>
         <div class="entry">
-          <h3>{e.role}</h3>
-          <p class="soft">
-            {e.where}
-            {e.location && <span class="muted"> · {e.location}</span>}
-          </p>
-          {e.summary && <p class="summary soft">{e.summary}</p>}
+          <div class="head">
+            <h3>{e.role}</h3>
+            {e.location && <span class="location">{e.location}</span>}
+          </div>
+          <p class="where serif">{e.where}</p>
+          {e.summary && <p class="summary serif">{e.summary}</p>}
           {e.bullets && (
-            <ul>
+            <ul class="serif">
               {e.bullets.map((b) => (
                 <li>{b}</li>
               ))}
@@ -38,43 +38,84 @@ const { items } = Astro.props;
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1.75rem;
   }
   .timeline > li {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 0.5rem;
+    gap: 0.35rem;
   }
   @media (min-width: 768px) {
     .timeline > li {
-      grid-template-columns: 11rem 1fr;
-      gap: 2rem;
+      grid-template-columns: 9.5rem 1fr;
+      gap: 1.75rem;
     }
+    .period { text-align: right; }
   }
   .period {
-    font-size: 0.8rem;
-    padding-top: 0.3rem;
+    font-size: 0.875rem;
+    color: var(--fg-mute);
+    padding-top: 0.1rem;
   }
   .entry {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.2rem;
+    position: relative;
+  }
+  @media (min-width: 768px) {
+    .entry {
+      padding-left: 1.25rem;
+      border-left: 2px solid var(--border);
+      transition: border-color 0.35s var(--ease);
+    }
+    li:hover .entry { border-left-color: var(--accent); }
+  }
+  .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    flex-wrap: wrap;
   }
   h3 {
-    font-size: 1.3rem;
+    font-size: 1.05rem;
+    color: var(--fg);
+  }
+  .location {
+    font-size: 0.875rem;
+    color: var(--fg-mute);
+    white-space: nowrap;
+  }
+  .where {
+    font-style: italic;
+    font-size: 0.95rem;
+    color: var(--fg-soft);
   }
   .summary,
   ul {
-    font-size: 0.875rem;
+    font-size: 0.925rem;
     color: var(--fg-soft);
     padding-top: 0.25rem;
+    line-height: 1.6;
   }
   ul {
-    list-style: disc outside;
-    margin-left: 1rem;
+    list-style: none;
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
   }
-  ul li::marker { color: var(--border); }
+  ul li {
+    position: relative;
+    padding-left: 1.1rem;
+  }
+  ul li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    border-left: 6px solid var(--accent-soft);
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+  }
 </style>

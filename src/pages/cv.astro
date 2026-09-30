@@ -24,29 +24,31 @@ const pdf = url('/cv-antonio-lara-gutierrez.pdf');
   <div class="stack">
     <header class="page-header split">
       <div class="head">
-        <h1>CV</h1>
+        <span class="eyebrow">Curriculum Vitae</span>
+        <h1>Antonio <strong>Lara Gutiérrez</strong></h1>
         <p>{researchProfile}</p>
+        <p class="updated muted">Last updated: September 2026</p>
       </div>
       <div class="downloads">
         <a class="button" href={pdf} download>
           <Icon name="file-down" size={16} /> Download PDF
         </a>
-        <a class="view muted" href={pdf} target="_blank" rel="noopener">View in browser</a>
+        <a class="button ghost" href={pdf} target="_blank" rel="noopener">View in browser</a>
       </div>
     </header>
 
     <section>
-      <h2>Education</h2>
+      <h2 class="section-title" data-reveal>Education</h2>
       <Timeline items={education} />
     </section>
 
     <section>
-      <h2>Research Experience</h2>
+      <h2 class="section-title" data-reveal>Research Experience</h2>
       <Timeline items={researchExperience} />
     </section>
 
     <section>
-      <div class="section-head">
+      <div class="section-head" data-reveal>
         <h2>Publications</h2>
         <a href={url('/publications')}>By category →</a>
       </div>
@@ -54,28 +56,28 @@ const pdf = url('/cv-antonio-lara-gutierrez.pdf');
     </section>
 
     <section>
-      <h2>Fellowships, Grants &amp; Awards</h2>
+      <h2 class="section-title" data-reveal>Fellowships, Grants &amp; Awards</h2>
       <Timeline items={awards} />
     </section>
 
     <section>
-      <h2>Teaching &amp; Dissemination</h2>
+      <h2 class="section-title" data-reveal>Teaching &amp; Dissemination</h2>
       <Timeline items={teaching} />
     </section>
 
     <section>
-      <h2>Industry Experience</h2>
+      <h2 class="section-title" data-reveal>Industry Experience</h2>
       <Timeline items={industryExperience} />
     </section>
 
     <section>
-      <h2>Skills</h2>
-      <dl class="rule-list skills">
+      <h2 class="section-title" data-reveal>Skills</h2>
+      <dl class="skills" data-reveal-stagger="60">
         {
           skills.map((s) => (
             <div>
               <dt class="mono">{s.area}</dt>
-              <dd class="soft">{s.items}</dd>
+              <dd class="serif">{s.items}</dd>
             </div>
           ))
         }
@@ -83,8 +85,8 @@ const pdf = url('/cv-antonio-lara-gutierrez.pdf');
     </section>
 
     <section>
-      <h2>Languages</h2>
-      <ul class="rule-list languages">
+      <h2 class="section-title" data-reveal>Languages</h2>
+      <ul class="languages" data-reveal-stagger="60">
         {
           languages.map((l) => (
             <li>
@@ -104,61 +106,62 @@ const pdf = url('/cv-antonio-lara-gutierrez.pdf');
     flex-direction: column;
     gap: 3.5rem;
   }
-  section > h2 {
-    font-size: 1.875rem;
-    margin-bottom: 1.5rem;
-  }
-  .section-head {
-    margin-bottom: 1.5rem;
-  }
   .head {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
   }
-  .head p {
-    font-size: 0.95rem;
-    line-height: 1.7;
+  .head .updated {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
   }
   .downloads {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 0.5rem;
+    flex-shrink: 0;
   }
-  .view {
-    font-size: 0.8rem;
-  }
-  .view:hover { color: var(--fg); opacity: 1; }
+  .downloads .button { justify-content: center; }
 
   .skills > div {
     display: grid;
     grid-template-columns: 1fr;
     gap: 0.25rem;
-    padding-block: 0.75rem;
-    font-size: 0.875rem;
+    padding-block: 0.6rem;
+    font-size: 0.95rem;
   }
-  .skills > div + div { border-top: 1px solid var(--border); }
   @media (min-width: 768px) {
     .skills > div {
-      grid-template-columns: 11rem 1fr;
-      gap: 2rem;
+      grid-template-columns: 9.5rem 1fr;
+      gap: 1.75rem;
     }
+    dt { text-align: right; }
   }
   dl, dd { margin: 0; }
   dt {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
+    font-weight: 600;
     color: var(--accent);
-    padding-top: 0.15rem;
   }
+  dd { color: var(--fg-soft); }
 
-  .languages > li {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    padding-block: 0.75rem;
-    font-size: 0.875rem;
+  .languages {
+    list-style: none;
   }
+  .languages > li {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+    padding-block: 0.4rem;
+    font-size: 0.95rem;
+  }
+  @media (min-width: 768px) {
+    .languages > li {
+      grid-template-columns: 9.5rem 1fr;
+      gap: 1.75rem;
+    }
+    .languages > li > span:first-child { text-align: right; }
+  }
+  .languages > li > span:first-child { font-weight: 600; color: var(--accent); }
+  .languages > li > span:last-child { font-family: var(--font-serif); color: var(--fg-soft); }
 </style>

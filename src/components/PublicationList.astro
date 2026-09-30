@@ -10,175 +10,252 @@ interface Props {
 
 const { items } = Astro.props;
 const self = 'Lara-Gutiérrez, A.';
+
+/** Where the cover and title should take the reader: DOI first, then open copies, then the venue. */
+const mainLink = (pub: Publication['data']) =>
+  pub.doi ? `https://doi.org/${pub.doi}` : (pub.url ?? pub.pdf ?? pub.venueUrl);
 ---
 
-<ul class="rule-list pubs">
+<ul class="pubs" data-reveal-stagger="90">
   {
-    items.map(({ data: pub }) => (
-      <li class="pub" id={pub.key}>
-        {pub.cover ? (
-          <div class:list={['badge', 'cover', pub.type]}>
-            <Image src={pub.cover} alt={`${pub.abbr ?? pub.venue} cover`} width={240} />
-          </div>
-        ) : (
-          <div class="badge mono" aria-hidden="true">
-            <span class="key">{pub.key}</span>
-            {pub.abbr && <span class="abbr">{pub.abbr}</span>}
-          </div>
-        )}
-        <div class="body">
-          <h3>{pub.title}</h3>
-          {pub.titleEn && <p class="translation soft">[{pub.titleEn}]</p>}
-          <p class="authors soft">
-            {pub.authors.map((a, i) => (
-              <>
-                {authorOrcids[a] ? (
-                  <a
-                    class:list={['author', { self: a === self }]}
-                    href={orcidUrl(authorOrcids[a])}
-                    target="_blank"
-                    rel="noopener"
-                    title={`ORCID ${authorOrcids[a]}`}
-                  >
-                    {a}
-                    <Icon name="orcid" size={11} class="orcid" />
-                  </a>
-                ) : (
-                  <span class:list={{ self: a === self }}>{a}</span>
-                )}
-                {i < pub.authors.length - 1 && (i === pub.authors.length - 2 ? ' & ' : ', ')}
-              </>
-            ))}
-          </p>
-          <p class="venue">
-            <em>{pub.venue}</em>
-            {pub.details && <span class="muted"> · {pub.details}</span>}
-            <span class="muted"> · {pub.year}</span>
-          </p>
-          <div class="meta">
-            {pub.jcr && (
-              <span class="pill mono">
-                JCR {pub.jcr.quartile} · IF {pub.jcr.impactFactor.toFixed(1)}
+    items.map(({ data: pub }) => {
+      const href = mainLink(pub);
+      return (
+        <li class="pub" id={pub.key}>
+          <div class="side">
+            {pub.cover ? (
+              <a
+                class:list={['cover', pub.type]}
+                href={href}
+                target="_blank"
+                rel="noopener"
+                aria-label={`Open “${pub.title}”`}
+                title="Open publication"
+              >
+                <Image src={pub.cover} alt={`${pub.abbr ?? pub.venue} cover`} width={320} />
+              </a>
+            ) : (
+              <span class="cover placeholder mono" aria-hidden="true">
+                {pub.abbr ?? pub.key}
               </span>
             )}
-            {pub.doi && (
-              <a class="pill" href={`https://doi.org/${pub.doi}`} target="_blank" rel="noopener">
-                <Icon name="external-link" size={12} /> DOI
-              </a>
-            )}
-            {pub.pdf && (
-              <a class="pill" href={pub.pdf} target="_blank" rel="noopener">
-                <Icon name="file-text" size={12} /> PDF
-              </a>
-            )}
-            {pub.code && (
-              <a class="pill" href={pub.code} target="_blank" rel="noopener">
-                <Icon name="github" size={12} /> Code
-              </a>
-            )}
-            {pub.url && (
-              <a class="pill" href={pub.url} target="_blank" rel="noopener">
-                <Icon name="external-link" size={12} /> Link
-              </a>
-            )}
           </div>
-        </div>
-      </li>
-    ))
+          <div class="body">
+            <span class="key mono">[{pub.key}]</span>
+            <h3 class="serif">
+              {href ? (
+                <a href={href} target="_blank" rel="noopener">
+                  {pub.title}
+                </a>
+              ) : (
+                pub.title
+              )}
+            </h3>
+            {pub.titleEn && <p class="translation serif">[{pub.titleEn}]</p>}
+            <p class="authors serif">
+              {pub.authors.map((a, i) => (
+                <>
+                  {authorOrcids[a] ? (
+                    <a
+                      class:list={['author', { self: a === self }]}
+                      href={orcidUrl(authorOrcids[a])}
+                      target="_blank"
+                      rel="noopener"
+                      title={`ORCID ${authorOrcids[a]}`}
+                    >
+                      {a}
+                      <Icon name="orcid" size={11} class="orcid" />
+                    </a>
+                  ) : (
+                    <span class:list={{ self: a === self }}>{a}</span>
+                  )}
+                  {i < pub.authors.length - 1 && (i === pub.authors.length - 2 ? ' & ' : ', ')}
+                </>
+              ))}
+            </p>
+            <p class="venue serif">
+              <em>{pub.venue}</em>
+              {pub.details && <span>, {pub.details}</span>}
+              <span>, {pub.year}.</span>
+            </p>
+            <div class="meta">
+              {pub.jcr && (
+                <span class="badge-jcr">
+                  JCR {pub.jcr.quartile} <span>IF {pub.jcr.impactFactor.toFixed(1)}</span>
+                </span>
+              )}
+              {pub.doi && (
+                <a class="pill" href={`https://doi.org/${pub.doi}`} target="_blank" rel="noopener">
+                  <Icon name="external-link" size={12} /> DOI
+                </a>
+              )}
+              {pub.pdf && (
+                <a class="pill" href={pub.pdf} target="_blank" rel="noopener">
+                  <Icon name="file-text" size={12} /> PDF
+                </a>
+              )}
+              {pub.url && (
+                <a class="pill" href={pub.url} target="_blank" rel="noopener">
+                  <Icon name="external-link" size={12} /> {pub.type === 'conference' ? 'Proceedings' : 'Link'}
+                </a>
+              )}
+              {pub.code && (
+                <a class="pill" href={pub.code} target="_blank" rel="noopener">
+                  <Icon name="github" size={12} /> Code
+                </a>
+              )}
+            </div>
+          </div>
+        </li>
+      );
+    })
   }
 </ul>
 
 <style>
+  .pubs {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+  }
   .pub {
-    scroll-margin-top: 5rem;
+    scroll-margin-top: 6rem;
     display: grid;
     grid-template-columns: 1fr;
-    gap: 1.25rem;
-    padding-block: 1.5rem;
+    gap: 1.5rem;
+    padding-block: 1.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .pub:first-child { padding-top: 0.5rem; }
+  .pub:last-child { border-bottom: none; }
+  .pub:target .body {
+    animation: flash 2s var(--ease);
+  }
+  @keyframes flash {
+    0%, 30% { background-color: var(--accent-tint); }
+    100% { background-color: transparent; }
   }
   @media (min-width: 768px) {
-    .pub { grid-template-columns: 7rem 1fr; }
+    .pub { grid-template-columns: 6.5rem 1fr; gap: 2rem; }
   }
-  .badge {
-    display: none;
-  }
+
+  /* ----- cover ----- */
+  .side { display: none; }
   @media (min-width: 768px) {
-    .badge {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 0.35rem;
-      width: 7rem;
-      height: 7rem;
-      border: 1px solid var(--border);
-      border-radius: 2px;
-      background-color: var(--bg-soft);
-      text-align: center;
-      padding: 0.5rem;
-    }
+    .side { display: block; position: relative; }
   }
-  @media (min-width: 768px) {
-    .badge.cover {
-      height: auto;
-      aspect-ratio: 3 / 4;
-      padding: 0;
-      overflow: hidden;
-      border-radius: 2px;
-      box-shadow: 0 1px 2px rgb(26 22 19 / 0.08);
-    }
-    .badge.cover :global(img) {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: top;
-    }
-    .badge.cover.conference {
-      aspect-ratio: 1 / 1;
-      background-color: var(--bg-tint);
-      padding: 0.5rem;
-    }
-    .badge.cover.conference :global(img) {
-      object-fit: contain;
-      object-position: center;
-    }
+  .cover {
+    position: relative;
+    display: block;
+    width: 6.5rem;
+    aspect-ratio: 3 / 4;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: var(--bg-soft);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    transform-origin: top left;
+    transition:
+      transform 0.5s var(--ease),
+      box-shadow 0.5s var(--ease),
+      border-color 0.5s var(--ease);
+    will-change: transform;
   }
-  .key {
-    font-family: var(--font-serif);
-    font-size: 2rem;
-    line-height: 1;
+  .cover :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+  }
+  .cover.conference {
+    aspect-ratio: 1 / 1;
+    background-color: #fff;
+    padding: 0.5rem;
+  }
+  .cover.conference :global(img) {
+    object-fit: contain;
+    object-position: center;
+  }
+  a.cover::after {
+    content: '↗';
+    position: absolute;
+    right: 0.35rem;
+    bottom: 0.35rem;
+    display: grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    color: #fff;
+    background-color: var(--accent);
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity 0.35s var(--ease), transform 0.35s var(--ease);
+  }
+  a.cover:hover,
+  a.cover:focus-visible {
+    z-index: 5;
+    transform: scale(1.45) translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--border-strong);
+  }
+  a.cover:hover::after,
+  a.cover:focus-visible::after {
+    opacity: 1;
+    transform: scale(0.7);
+  }
+  .placeholder {
+    display: grid;
+    place-items: center;
+    font-size: 0.75rem;
     color: var(--accent);
-    font-style: italic;
+    text-align: center;
   }
-  .abbr {
-    font-size: 0.7rem;
-    color: var(--fg-mute);
-  }
+
+  /* ----- text ----- */
   .body {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.45rem;
+    border-radius: 6px;
+  }
+  .key {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--accent-soft);
   }
   h3 {
-    font-size: 1.3rem;
-    line-height: 1.35;
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+  h3 a {
+    color: var(--fg);
+    background-image: linear-gradient(var(--accent), var(--accent));
+    background-size: 0% 1px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size 0.45s var(--ease), color 0.25s var(--ease);
+  }
+  h3 a:hover {
+    color: var(--accent);
+    background-size: 100% 1px;
   }
   .translation {
     font-size: 0.875rem;
-    font-style: italic;
+    color: var(--fg-mute);
   }
   .authors {
-    font-size: 0.875rem;
+    font-size: 0.925rem;
+    color: var(--fg-soft);
     line-height: 1.6;
   }
   .author {
     color: inherit;
     white-space: nowrap;
   }
-  .author:hover {
-    color: var(--accent);
-    opacity: 1;
-  }
+  .author:hover { color: var(--accent); }
   .author :global(.orcid) {
     display: inline-block;
     margin-left: 0.2rem;
@@ -187,16 +264,17 @@ const self = 'Lara-Gutiérrez, A.';
   }
   .self {
     color: var(--fg);
-    font-weight: 600;
+    font-weight: 700;
   }
   .venue {
-    font-size: 0.875rem;
+    font-size: 0.925rem;
+    color: var(--fg-soft);
   }
-  .venue em { color: var(--fg-soft); }
   .meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    padding-top: 0.25rem;
+    align-items: center;
+    gap: 0.45rem;
+    padding-top: 0.35rem;
   }
 </style>

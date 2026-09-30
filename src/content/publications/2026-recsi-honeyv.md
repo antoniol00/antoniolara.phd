@@ -13,4 +13,7 @@ year: 2026
 abbr: RECSI 2026
 cover: ../../assets/publications/recsi2026.png
 code: https://github.com/antoniol00/HoneyV-malware-dataset
+pdf: https://www.nics.uma.es/wp-content/papers/Lara2026.pdf
+url: https://cryptull.webs.ull.es/RECSI2026/LibrodeActasRECSI2026.pdf
+venueUrl: https://cryptull.webs.ull.es/RECSI2026/
 ---

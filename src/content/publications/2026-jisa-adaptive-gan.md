@@ -17,4 +17,5 @@ jcr:
   impactFactor: 4.4
 doi: 10.1016/j.jisa.2026.104584
 selected: true
+pdf: https://www.nics.uma.es/wp-content/papers/Lara2026b.pdf
 ---

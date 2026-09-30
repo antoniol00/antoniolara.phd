@@ -18,7 +18,8 @@ const rendered = await Promise.all(projects.map(async (p) => ({ p, Content: (awa
   description="Research and personal projects by Antonio Lara Gutiérrez: honeypots, GANs, concept drift and malware analysis."
 >
   <div class="stack">
-    <header class="page-header">
+    <header class="page-header" data-reveal>
+      <span class="eyebrow">Code &amp; prototypes</span>
       <h1>Projects</h1>
       <p>
         Open-source tools and research prototypes: generative honeypots, synthetic traffic for
@@ -26,13 +27,13 @@ const rendered = await Promise.all(projects.map(async (p) => ({ p, Content: (awa
       </p>
     </header>
 
-    <ul class="grid">
+    <ul class="grid" data-reveal-stagger="80">
       {
         rendered.map(({ p, Content }) => (
           <li class="card">
             <div class="top">
               <span class="eyebrow">{p.data.year}</span>
-              {p.data.featured && <span class="featured mono">Featured</span>}
+              {p.data.featured && <span class="featured">Featured</span>}
             </div>
             <h2>
               {p.data.repo ? (
@@ -98,14 +99,19 @@ const rendered = await Promise.all(projects.map(async (p) => ({ p, Content: (awa
     flex-direction: column;
     gap: 0.75rem;
     padding: 1.5rem;
-    background-color: var(--bg-tint);
+    background-color: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 0.75rem;
-    transition: transform 0.2s ease, border-color 0.2s ease;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    transition:
+      transform 0.45s var(--ease),
+      border-color 0.45s var(--ease),
+      box-shadow 0.45s var(--ease);
   }
   .card:hover {
-    border-color: var(--accent);
-    transform: translateY(-2px);
+    border-color: var(--border-strong);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
   }
   .top {
     display: flex;
@@ -113,23 +119,29 @@ const rendered = await Promise.all(projects.map(async (p) => ({ p, Content: (awa
     align-items: center;
   }
   .featured {
-    font-size: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--fg-mute);
+    letter-spacing: 0.1em;
+    color: #8a5a00;
+    background-color: var(--highlight);
+    padding: 0.1rem 0.5rem;
+    border-radius: 3px;
   }
   h2 {
-    font-size: 1.6rem;
-    line-height: 1.2;
+    font-size: 1.35rem;
+    line-height: 1.25;
   }
-  h2 a { color: var(--fg); }
-  h2 a:hover { color: var(--accent); opacity: 1; }
+  h2 a { color: var(--accent); }
+  h2 a:hover { color: var(--accent-strong); }
   .summary {
-    font-size: 0.925rem;
-    line-height: 1.6;
+    font-size: 1rem;
+    line-height: 1.55;
+    color: var(--fg);
   }
   .body {
-    font-size: 0.85rem;
+    font-family: var(--font-serif);
+    font-size: 0.9rem;
     line-height: 1.65;
   }
   .body :global(p + p) { margin-top: 0.5rem; }

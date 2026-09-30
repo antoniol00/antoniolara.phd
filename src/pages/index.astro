@@ -1,5 +1,6 @@
 ---
 import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from '../components/Icon.astro';
 import PublicationList from '../components/PublicationList.astro';
@@ -9,31 +10,41 @@ import { getPublications } from '../lib/publications';
 import { url } from '../lib/url';
 import profile from '../assets/profile.png';
 
-const selected = (await getPublications()).filter((p) => p.data.selected);
+const publications = await getPublications();
+const selected = publications.filter((p) => p.data.selected);
+const projects = await getCollection('projects');
+
+const stats = [
+  { value: publications.filter((p) => p.data.type === 'journal').length, label: 'JCR journal articles' },
+  {
+    value: publications.filter((p) => p.data.jcr?.quartile === 'Q1').length,
+    label: 'in Q1 journals',
+  },
+  { value: publications.filter((p) => p.data.type === 'conference').length, label: 'national conferences' },
+  { value: projects.length, label: 'open-source projects' },
+];
 ---
 
 <BaseLayout title="About">
   <div class="stack">
     <section class="hero">
-      <div class="intro">
+      <div class="intro" data-reveal-stagger="90">
         <span class="eyebrow">PhD Candidate · AI for Cybersecurity</span>
-        <h1>
-          {site.firstName} <span class="italic accent">{site.lastName}</span>
-        </h1>
-        <p class="affiliation soft">
-          FPU Predoctoral Researcher at{' '}
-          <a href="https://www.nics.uma.es/" target="_blank" rel="noopener">NICS Lab</a>,{' '}
-          <a href="https://www.uma.es/" target="_blank" rel="noopener">University of Málaga</a> ·
-          Málaga, Spain.
+        <h1>{site.firstName} <strong>{site.lastName}</strong></h1>
+        <p class="role">PhD Candidate &amp; FPU Predoctoral Researcher. AI for Cybersecurity</p>
+        <p class="affiliation">
+          <a href="https://www.nics.uma.es/" target="_blank" rel="noopener">NICS Lab</a>. Dept. of
+          Languages and Computer Science. ETSI Informática,{' '}
+          <a href="https://www.uma.es/" target="_blank" rel="noopener">University of Málaga</a>
         </p>
 
-        <div class="bio">
+        <div class="bio serif">
           <p>
             My research lies at the intersection of <strong>Artificial Intelligence</strong> and <strong>Cybersecurity</strong>.
             I work on <strong>concept-drift</strong> detection and adaptation in AI-driven threat detection
             systems, <strong>multimodal malware</strong> classification and attribution through static,
             dynamic and visual feature fusion, <strong>generative models</strong> (GANs and LLMs) for
-            adversarial robustness of intrusion detection and adaptive cyber deception, and <strong>LLM agents</strong>
+            adversarial robustness of intrusion detection and adaptive cyber deception, and <strong>LLM agents</strong>{' '}
             for automated threat intelligence.
           </p>
           <p>
@@ -47,12 +58,17 @@ const selected = (await getPublications()).filter((p) => p.data.selected);
         </ul>
 
         <div class="actions">
+          <a class="button" href={url('/cv-antonio-lara-gutierrez.pdf')} download>
+            <Icon name="file-down" size={16} /> Download CV
+          </a>
+          <a class="button ghost" href={url('/publications')}>Publications</a>
           <div class="socials">
             {
               socials.map((s) => (
                 <a
                   href={s.href}
                   aria-label={s.label}
+                  title={s.label}
                   target={s.name === 'email' ? undefined : '_blank'}
                   rel="noopener noreferrer"
                 >
@@ -61,40 +77,48 @@ const selected = (await getPublications()).filter((p) => p.data.selected);
               ))
             }
           </div>
-          <a class="button" href={url('/cv-antonio-lara-gutierrez.pdf')} download>
-            <Icon name="file-down" size={16} /> Download CV
-          </a>
         </div>
       </div>
 
-      <figure class="portrait">
+      <figure class="portrait" data-reveal style="--reveal-delay: 200ms">
         <div class="frame">
           <Image
             src={profile}
             alt={`Portrait of ${site.name}`}
-            width={512}
-            height={512}
+            width={560}
+            height={560}
             loading="eager"
           />
         </div>
-        <figcaption class="muted">
-          NICS Lab · ETSI Informática<br />
-          University of Málaga<br />
-          Málaga, Spain
+        <figcaption>
+          <span>NICS Lab · ETSI Informática</span>
+          <span>University of Málaga, Spain</span>
         </figcaption>
       </figure>
     </section>
 
+    <section class="stats" aria-label="At a glance" data-reveal-stagger="80">
+      {
+        stats.map((s) => (
+          <div class="stat">
+            <span class="value" data-count={s.value}>{s.value}</span>
+            <span class="label">{s.label}</span>
+          </div>
+        ))
+      }
+    </section>
+
     <section>
-      <div class="section-head">
+      <div class="section-head" data-reveal>
         <h2>News</h2>
+        <a href={url('/news')}>All news →</a>
       </div>
-      <ul class="rule-list news">
+      <ul class="news" data-reveal-stagger="70">
         {
-          news.map((n) => (
+          news.slice(0, 4).map((n) => (
             <li>
-              <time class="mono muted">{n.date}</time>
-              <p class="soft">{n.text}</p>
+              <time>{n.date}</time>
+              <p class="serif">{n.text}</p>
             </li>
           ))
         }
@@ -104,7 +128,7 @@ const selected = (await getPublications()).filter((p) => p.data.selected);
     {
       selected.length > 0 && (
         <section>
-          <div class="section-head">
+          <div class="section-head" data-reveal>
             <h2>Selected Publications</h2>
             <a href={url('/publications')}>View all →</a>
           </div>
@@ -115,50 +139,88 @@ const selected = (await getPublications()).filter((p) => p.data.selected);
   </div>
 </BaseLayout>
 
+<script>
+  // Count-up animation for the stats strip.
+  function initCounters() {
+    const els = document.querySelectorAll<HTMLElement>('.stat .value[data-count]');
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return;
+    const io = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const el = entry.target as HTMLElement;
+        const target = Number(el.dataset.count);
+        const start = performance.now();
+        const tick = (t: number) => {
+          const p = Math.min((t - start) / 900, 1);
+          el.textContent = String(Math.round(target * (1 - Math.pow(1 - p, 3))));
+          if (p < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+        io.unobserve(el);
+      }
+    }, { threshold: 0.6 });
+    els.forEach((el) => {
+      el.textContent = '0';
+      io.observe(el);
+    });
+  }
+  document.addEventListener('astro:page-load', initCounters);
+</script>
+
 <style>
   .stack {
     display: flex;
     flex-direction: column;
-    gap: 5rem;
+    gap: 4.5rem;
   }
+
+  /* ----- hero ----- */
   .hero {
     display: grid;
     grid-template-columns: 1fr;
     gap: 2.5rem;
     align-items: center;
   }
-  @media (min-width: 768px) {
+  @media (min-width: 820px) {
     .hero {
-      grid-template-columns: 1fr auto;
+      grid-template-columns: 1fr 15.5rem;
       gap: 3.5rem;
     }
   }
   .intro {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 0.9rem;
     max-width: var(--prose-width);
   }
   h1 {
-    font-size: 3.25rem;
-    line-height: 1.05;
+    font-size: 2.9rem;
   }
   @media (min-width: 768px) {
-    h1 { font-size: 4.25rem; }
+    h1 { font-size: 3.6rem; }
+  }
+  .role {
+    font-size: 1.2rem;
+    color: var(--fg);
   }
   .affiliation {
-    font-size: 1.125rem;
-    line-height: 1.6;
+    font-size: 0.95rem;
+    color: var(--fg-mute);
   }
+  .affiliation a { color: var(--fg-soft); border-bottom: 1px solid var(--border-strong); }
+  .affiliation a:hover { color: var(--accent); border-color: var(--accent); }
   .bio {
     display: flex;
     flex-direction: column;
-    gap: 0.9rem;
-    font-size: 0.98rem;
+    gap: 0.8rem;
+    font-size: 1rem;
     line-height: 1.75;
-    padding-top: 0.25rem;
+    color: var(--fg-soft);
+    padding-top: 0.6rem;
+    margin-top: 0.4rem;
+    border-top: 1px solid var(--border);
   }
-  .bio strong { font-weight: 600; }
+  .bio strong { color: var(--fg); font-weight: 700; }
   .interests {
     list-style: none;
     display: flex;
@@ -169,59 +231,115 @@ const selected = (await getPublications()).filter((p) => p.data.selected);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 1.5rem;
-    padding-top: 0.5rem;
+    gap: 0.75rem 1rem;
+    padding-top: 0.6rem;
   }
   .socials {
     display: flex;
-    gap: 1rem;
+    gap: 0.9rem;
+    margin-left: 0.25rem;
   }
-  .socials a { color: var(--fg-mute); }
-  .socials a:hover { color: var(--accent); opacity: 1; }
+  .socials a {
+    color: var(--fg-mute);
+    transition: color 0.2s var(--ease), transform 0.25s var(--ease);
+  }
+  .socials a:hover { color: var(--accent); transform: translateY(-2px); }
 
   .portrait {
     margin: 0 auto;
-    width: 16rem;
+    width: 15.5rem;
   }
-  @media (min-width: 768px) {
+  @media (min-width: 820px) {
     .portrait { margin: 0; }
   }
   .frame {
     position: relative;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
   }
-  .frame::before {
+  .frame::after {
     content: '';
     position: absolute;
-    inset: -0.5rem;
-    border-radius: 1rem;
-    background-color: var(--bg-tint);
-    border: 1px solid var(--border);
-    z-index: -1;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px rgb(18 42 68 / 0.08);
   }
   .frame :global(img) {
     width: 100%;
     height: auto;
     aspect-ratio: 1 / 1;
     object-fit: cover;
-    border-radius: 0.75rem;
-    border: 1px solid var(--border);
+    transition: transform 0.8s var(--ease);
   }
+  .frame:hover :global(img) { transform: scale(1.04); }
   figcaption {
-    margin-top: 1.25rem;
-    font-size: 0.75rem;
-    line-height: 1.6;
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    color: var(--fg-mute);
   }
 
+  /* ----- stats ----- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background-color: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  @media (min-width: 768px) {
+    .stats { grid-template-columns: repeat(4, 1fr); }
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 1.25rem 1.4rem;
+    background-color: var(--bg-tint);
+    transition: background-color 0.3s var(--ease);
+  }
+  .stat:hover { background-color: var(--accent-tint); }
+  .value {
+    font-size: 2.2rem;
+    font-weight: 300;
+    line-height: 1.1;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .label {
+    font-size: 0.85rem;
+    color: var(--fg-mute);
+  }
+
+  /* ----- news ----- */
+  .news {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+  }
   .news > li {
     display: grid;
-    grid-template-columns: 5.5rem 1fr;
+    grid-template-columns: 6rem 1fr;
     gap: 1rem;
-    padding-block: 0.75rem;
-    font-size: 0.875rem;
+    padding: 0.8rem 0.5rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.95rem;
+    border-radius: 6px;
+    transition: background-color 0.3s var(--ease);
   }
+  .news > li:hover { background-color: var(--bg-tint); }
   .news time {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent-soft);
     padding-top: 0.15rem;
   }
+  .news p { color: var(--fg-soft); }
 </style>

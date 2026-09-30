@@ -12,4 +12,5 @@ details: Universitat Politècnica de Catalunya, Barcelona, 6–8 May 2026. Proce
 year: 2026
 abbr: JNIC 2026
 cover: ../../assets/publications/jnic2026.png
+venueUrl: https://www.incibe.es/eventos/JNIC/JNIC2026
 ---

@@ -28,6 +28,8 @@ const publications = defineCollection({
       doi: z.string().optional(),
       pdf: z.string().optional(),
       url: z.url().optional(),
+      /** Conference or journal website. */
+      venueUrl: z.url().optional(),
       /** Source code repository. */
       code: z.url().optional(),
       selected: z.boolean().default(false),

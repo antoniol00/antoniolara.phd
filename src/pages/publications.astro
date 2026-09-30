@@ -17,7 +17,8 @@ const groups = Object.entries(publicationTypes)
   description="Peer-reviewed publications on AI for cybersecurity by Antonio Lara Gutiérrez."
 >
   <div class="stack">
-    <header class="page-header">
+    <header class="page-header" data-reveal>
+      <span class="eyebrow">Research output</span>
       <h1>Publications</h1>
       <p>
         Research on AI-driven threat detection, concept drift, adversarial robustness, malware
@@ -29,9 +30,10 @@ const groups = Object.entries(publicationTypes)
     {
       groups.map((g) => (
         <section>
-          <h2 class="group muted">
-            {g.label} <span class="count mono">{g.items.length}</span>
-          </h2>
+          <div class="section-head" data-reveal>
+            <h2>{g.label}</h2>
+            <span class="count">{g.items.length}</span>
+          </div>
           <PublicationList items={g.items} />
         </section>
       ))
@@ -45,14 +47,14 @@ const groups = Object.entries(publicationTypes)
     flex-direction: column;
     gap: 3rem;
   }
-  .group {
-    font-size: 2.25rem;
-    color: var(--fg-mute);
-    margin-bottom: 1rem;
-  }
   .count {
     font-size: 0.8rem;
-    vertical-align: middle;
+    font-weight: 600;
+    min-width: 1.6rem;
+    text-align: center;
+    padding: 0.05rem 0.5rem;
+    border-radius: 999px;
     color: var(--accent);
+    background-color: var(--accent-tint);
   }
 </style>
