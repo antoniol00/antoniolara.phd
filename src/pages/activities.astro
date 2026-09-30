@@ -46,8 +46,8 @@ for (const entry of activities) {
       <span class="eyebrow">Month by month</span>
       <h1>Activities</h1>
       <p>
-        Talks, awards, conferences, publications and research stays, month by month. Use the
-        calendar to jump through what has been going on.
+        Talks, awards, conferences, publications, competitions and research stays, month by month.
+        Pick a year, or use the calendar to jump to any entry.
       </p>
     </header>
 
@@ -58,17 +58,53 @@ for (const entry of activities) {
         </div>
       </div>
 
-      <div class="feed">
+      <div class="feed" data-activity-feed>
         {
-          years.map((y) => (
-            <section class="year">
-              <h2 class="year-label" data-reveal>{y.year}</h2>
+          years.length > 0 && (
+            <div class="tabs" role="tablist" aria-label="Year">
+              {years.map((y, i) => (
+                <button
+                  type="button"
+                  role="tab"
+                  class="tab"
+                  id={`tab-${y.year}`}
+                  aria-controls={`year-${y.year}`}
+                  aria-selected={i === 0 ? 'true' : 'false'}
+                  data-year-tab={y.year}
+                >
+                  {y.year}
+                  <span class="tab-count">
+                    {y.months.reduce((n, m) => n + m.entries.length, 0)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )
+        }
+        {
+          years.map((y, i) => (
+            <section
+              class="year"
+              id={`year-${y.year}`}
+              role="tabpanel"
+              aria-labelledby={`tab-${y.year}`}
+              data-year={y.year}
+              hidden={i !== 0}
+            >
+              <h2 class="sr-only">{y.year}</h2>
               {y.months.map((m) => (
                 <div class="month" id={`m-${m.key}`} data-month={m.key}>
                   <h3 class="month-label" data-reveal>{m.label}</h3>
                   <ol class="entries" data-reveal-stagger="80">
                     {m.entries.map(({ entry, Content, start, end }) => (
-                      <li class="entry" id={entry.id}>
+                      <li
+                        class="entry"
+                        id={entry.id}
+                        data-entry
+                        data-start={entry.data.date}
+                        data-year={start.year}
+                        tabindex="-1"
+                      >
                         <div class="date" aria-hidden="true">
                           {start.day ? (
                             <>
@@ -123,6 +159,104 @@ for (const entry of activities) {
   </div>
 </BaseLayout>
 
+<script>
+  /* Feed side of the Activities page: year tabs, focusing cards picked in the calendar,
+     and reporting hovered cards back to the calendar (see ActivityCalendar.astro). */
+  const emit = (name: string, detail: unknown) => document.dispatchEvent(new CustomEvent(name, { detail }));
+  let abort: AbortController | undefined;
+
+  function initFeed() {
+    abort?.abort();
+    const feed = document.querySelector<HTMLElement>('[data-activity-feed]');
+    if (!feed) return;
+    abort = new AbortController();
+    const { signal } = abort;
+
+    const tabs = [...feed.querySelectorAll<HTMLButtonElement>('[data-year-tab]')];
+    const panels = [...feed.querySelectorAll<HTMLElement>('section[data-year]')];
+    const cards = [...feed.querySelectorAll<HTMLElement>('[data-entry]')];
+    let activeYear = Number(tabs[0]?.dataset.yearTab);
+
+    function showYear(year: number, { announce = true } = {}) {
+      if (year === activeYear && !panels.some((p) => p.hidden && Number(p.dataset.year) === year)) return;
+      activeYear = year;
+      for (const t of tabs) t.setAttribute('aria-selected', String(Number(t.dataset.yearTab) === year));
+      for (const p of panels) p.hidden = Number(p.dataset.year) !== year;
+      clearFocus();
+      if (announce) emit('activities:show-year', { year });
+    }
+
+    function clearFocus() {
+      feed!.classList.remove('has-focus');
+      for (const c of cards) c.classList.remove('focused');
+      emit('activities:focused', { ids: [] });
+    }
+
+    function focusCards(ids: string[]) {
+      const targets = ids.map((id) => document.getElementById(id)).filter((el): el is HTMLElement => !!el);
+      if (!targets.length) return;
+      showYear(Number(targets[0].dataset.year));
+      for (const c of cards) c.classList.remove('focused');
+      // Restart the pulse animation even if the same card is picked twice.
+      void feed!.offsetWidth;
+      for (const t of targets) t.classList.add('focused');
+      feed!.classList.add('has-focus');
+      targets[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      targets[0].focus({ preventScroll: true });
+      history.replaceState(null, '', `#${targets[0].id}`);
+      emit('activities:focused', { ids, start: targets[0].dataset.start });
+    }
+
+    tabs.forEach((t) =>
+      t.addEventListener('click', () => {
+        showYear(Number(t.dataset.yearTab));
+        feed.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, { signal }),
+    );
+
+    cards.forEach((c) => {
+      c.addEventListener('mouseenter', () => emit('activities:highlight', { id: c.id, start: c.dataset.start }), { signal });
+      c.addEventListener('mouseleave', () => emit('activities:highlight', { id: null }), { signal });
+    });
+
+    document.addEventListener('activities:select', (ev) => focusCards((ev as CustomEvent<{ ids: string[] }>).detail.ids), { signal });
+    document.addEventListener('activities:year', (ev) => showYear((ev as CustomEvent<{ year: number }>).detail.year, { announce: false }), { signal });
+    document.addEventListener(
+      'activities:goto-month',
+      (ev) => {
+        const { year, month } = (ev as CustomEvent<{ year: number; month: number }>).detail;
+        showYear(year, { announce: false });
+        document
+          .getElementById(`m-${year}-${String(month).padStart(2, '0')}`)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      },
+      { signal },
+    );
+
+    // Clicking outside the focused cards (and outside the calendar) or pressing Esc clears the focus.
+    document.addEventListener(
+      'click',
+      (ev) => {
+        const target = ev.target as HTMLElement;
+        if (!feed.classList.contains('has-focus')) return;
+        if (target.closest('.entry.focused') || target.closest('[data-activity-calendar]')) return;
+        clearFocus();
+      },
+      { signal },
+    );
+    document.addEventListener('keydown', (ev) => ev.key === 'Escape' && clearFocus(), { signal });
+
+    // Deep links (e.g. from the home page): open the right year and point at the card.
+    const hash = decodeURIComponent(location.hash.slice(1));
+    if (hash && document.getElementById(hash)?.matches('[data-entry]')) {
+      requestAnimationFrame(() => focusCards([hash]));
+    }
+  }
+
+  document.addEventListener('astro:page-load', initFeed);
+  document.addEventListener('astro:before-swap', () => abort?.abort());
+</script>
+
 <style>
   .stack {
     display: flex;
@@ -151,13 +285,59 @@ for (const entry of activities) {
     flex-direction: column;
     gap: 2.5rem;
   }
-  .year-label {
-    font-size: 2.25rem;
-    font-weight: 300;
-    color: var(--accent);
-    line-height: 1;
-    padding-bottom: 0.75rem;
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
     border-bottom: 1px solid var(--border-strong);
+    margin-bottom: -1rem;
+  }
+  .tab {
+    position: relative;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    padding: 0.35rem 0.9rem 0.6rem;
+    border: none;
+    background: none;
+    font: inherit;
+    font-size: 1.9rem;
+    font-weight: 300;
+    line-height: 1;
+    color: var(--fg-mute);
+    cursor: pointer;
+    transition: color 0.25s var(--ease);
+  }
+  .tab::after {
+    content: '';
+    position: absolute;
+    left: 0.6rem;
+    right: 0.6rem;
+    bottom: -1px;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+    background-color: var(--accent);
+    transform: scaleX(0);
+    transition: transform 0.35s var(--ease);
+  }
+  .tab:hover { color: var(--accent-soft); }
+  .tab[aria-selected='true'] { color: var(--accent); }
+  .tab[aria-selected='true']::after { transform: scaleX(1); }
+  .tab-count {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    color: var(--accent);
+    background-color: var(--accent-tint);
+  }
+  .year[hidden] { display: none; }
+  .year:not([hidden]) {
+    animation: fade-in 0.45s var(--ease);
+  }
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
   }
   .month {
     scroll-margin-top: 6rem;
@@ -189,24 +369,42 @@ for (const entry of activities) {
     transition:
       border-color 0.4s var(--ease),
       box-shadow 0.4s var(--ease),
-      transform 0.4s var(--ease);
+      transform 0.4s var(--ease),
+      opacity 0.4s var(--ease),
+      background-color 0.4s var(--ease);
   }
   .entry:hover {
     border-color: var(--border-strong);
     box-shadow: var(--shadow-md);
     transform: translateY(-2px);
   }
-  .entry:global(.flash),
-  .entry:target {
-    animation: flash 2.2s var(--ease);
+  .entry {
+    outline: none;
   }
-  @keyframes flash {
-    0%, 35% {
-      border-color: var(--accent-soft);
-      box-shadow: 0 0 0 4px var(--accent-tint);
-    }
+  /* A card picked from the calendar stays highlighted; the rest fade back. */
+  .feed:global(.has-focus) .entry:not(:global(.focused)) {
+    opacity: 0.45;
+  }
+  .feed:global(.has-focus) .entry:not(:global(.focused)):hover {
+    opacity: 0.85;
+  }
+  .entry:global(.focused) {
+    border-color: var(--accent-soft);
+    background-color: var(--bg-tint);
+    box-shadow: 0 0 0 4px var(--accent-tint), var(--shadow-md);
+    animation: pulse 1.6s var(--ease);
+  }
+  .entry:global(.focused) .date {
+    color: #fff;
+    background-color: var(--accent);
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgb(61 101 145 / 0.45), var(--shadow-md); transform: scale(1.01); }
+    60% { box-shadow: 0 0 0 12px rgb(61 101 145 / 0), var(--shadow-md); transform: none; }
+    100% { box-shadow: 0 0 0 4px var(--accent-tint), var(--shadow-md); }
   }
   .date {
+    transition: background-color 0.35s var(--ease);
     display: flex;
     flex-direction: column;
     align-items: center;

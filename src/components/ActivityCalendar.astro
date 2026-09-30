@@ -36,6 +36,15 @@ const events = Astro.props.items.map((n) => ({
 </aside>
 
 <script>
+  /*
+   * Calendar side of the Activities page. It talks to the feed through DOM events:
+   *   out: activities:select {ids}         – user picked a day / entry in the calendar
+   *        activities:goto-month {year, month} – user picked a month in the activity strip
+   *        activities:year {year}          – calendar moved to another year
+   *   in:  activities:highlight {id|null, start?} – a card is hovered
+   *        activities:show-year {year}     – feed switched year (tabs)
+   *        activities:focused {ids}        – feed focused these cards
+   */
   interface CalEvent {
     id: string;
     title: string;
@@ -47,13 +56,16 @@ const events = Astro.props.items.map((n) => ({
   const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const pad = (n: number) => String(n).padStart(2, '0');
   const ymd = (y: number, m: number, d: number) => `${y}-${pad(m)}-${pad(d)}`;
+  const emit = (name: string, detail: unknown) => document.dispatchEvent(new CustomEvent(name, { detail }));
 
-  let cleanup: (() => void) | undefined;
+  let abort: AbortController | undefined;
 
   function init() {
-    cleanup?.();
+    abort?.abort();
     const root = document.querySelector<HTMLElement>('[data-activity-calendar]');
     if (!root) return;
+    abort = new AbortController();
+    const { signal } = abort;
 
     const events: CalEvent[] = JSON.parse(root.querySelector('[data-events]')!.textContent || '[]');
     const grid = root.querySelector<HTMLElement>('[data-grid]')!;
@@ -61,15 +73,18 @@ const events = Astro.props.items.map((n) => ({
     const list = root.querySelector<HTMLElement>('[data-month-events]')!;
     const years = root.querySelector<HTMLElement>('[data-years]')!;
 
-    // Index: exact days (including every day of a range) and month-level events.
+    // Index: exact days (every day of a range) and every month an event touches.
     const byDay = new Map<string, CalEvent[]>();
     const byMonth = new Map<string, CalEvent[]>();
     const longEvents = new Set<CalEvent>();
+    const addMonth = (mk: string, e: CalEvent) => {
+      const inMonth = byMonth.get(mk) ?? [];
+      if (!inMonth.includes(e)) byMonth.set(mk, [...inMonth, e]);
+    };
     for (const e of events) {
       const [y, m, d] = e.start.split('-').map(Number);
       if (!d) {
-        const mk = `${y}-${pad(m)}`;
-        byMonth.set(mk, [...(byMonth.get(mk) ?? []), e]);
+        addMonth(`${y}-${pad(m)}`, e);
         continue;
       }
       const startDate = new Date(Date.UTC(y, m - 1, d));
@@ -79,25 +94,32 @@ const events = Astro.props.items.map((n) => ({
         const dt = new Date(t);
         const key = ymd(dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
         byDay.set(key, [...(byDay.get(key) ?? []), e]);
-        const mk = key.slice(0, 7);
-        const inMonth = byMonth.get(mk) ?? [];
-        if (!inMonth.includes(e)) byMonth.set(mk, [...inMonth, e]);
+        addMonth(key.slice(0, 7), e);
       }
     }
 
     const latest = events[0]?.start.split('-').map(Number) ?? [new Date().getFullYear(), new Date().getMonth() + 1];
     let viewYear = latest[0];
     let viewMonth = latest[1];
+    let hovered: string | null = null;
+    let focused: string[] = [];
 
-    const scrollToId = (id: string) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      el.classList.remove('flash');
-      void el.offsetWidth;
-      el.classList.add('flash');
-      history.replaceState(null, '', `#${id}`);
+    /** Latest month of a year that has activity (falls back to December). */
+    const latestMonthOf = (year: number) => {
+      for (let m = 12; m >= 1; m--) if (byMonth.has(`${year}-${pad(m)}`)) return m;
+      return 12;
     };
+
+    function paintMarks() {
+      const marked = new Set([...(hovered ? [hovered] : []), ...focused]);
+      grid.querySelectorAll<HTMLElement>('.day[data-ids]').forEach((cell) => {
+        const ids = cell.dataset.ids!.split(' ');
+        cell.classList.toggle('hl', ids.some((id) => marked.has(id)));
+      });
+      list.querySelectorAll<HTMLElement>('button[data-id]').forEach((b) => {
+        b.classList.toggle('hl', marked.has(b.dataset.id!));
+      });
+    }
 
     function render() {
       title.textContent = `${MONTHS[viewMonth - 1]} ${viewYear}`;
@@ -117,6 +139,8 @@ const events = Astro.props.items.map((n) => ({
         cell.textContent = String(d);
         if (key === todayKey) cell.classList.add('today');
         if (dayEvents) {
+          (cell as HTMLButtonElement).type = 'button';
+          cell.dataset.ids = dayEvents.map((e) => e.id).join(' ');
           cell.classList.add('has-event');
           // Days covered only by long ranges (stays, month-long events) get a lighter style.
           if (dayEvents.every((e) => longEvents.has(e))) cell.classList.add('long');
@@ -126,9 +150,12 @@ const events = Astro.props.items.map((n) => ({
           if (shares(prev) || shares(next)) cell.classList.add('range');
           if (!shares(prev)) cell.classList.add('range-start');
           if (!shares(next)) cell.classList.add('range-end');
-          cell.setAttribute('title', dayEvents.map((e) => e.title).join('\n'));
-          cell.setAttribute('aria-label', `${d} ${MONTHS[viewMonth - 1]}: ${dayEvents.map((e) => e.title).join(', ')}`);
-          cell.addEventListener('click', () => scrollToId(dayEvents[0].id));
+          const names = dayEvents.map((e) => e.title);
+          cell.title = names.join('\n');
+          cell.setAttribute('aria-label', `${d} ${MONTHS[viewMonth - 1]}: ${names.join(', ')}`);
+          // Prefer short events over long ranges when a day has both.
+          const ordered = [...dayEvents].sort((a, b) => Number(longEvents.has(a)) - Number(longEvents.has(b)));
+          cell.addEventListener('click', () => emit('activities:select', { ids: ordered.map((e) => e.id) }));
         }
         grid.append(cell);
       }
@@ -145,26 +172,36 @@ const events = Astro.props.items.map((n) => ({
         const li = document.createElement('li');
         const btn = document.createElement('button');
         btn.type = 'button';
+        btn.dataset.id = e.id;
         const [sy, sm, sd] = e.start.split('-').map(Number);
         const startsHere = sy === viewYear && sm === viewMonth;
         btn.innerHTML = `<span class="when">${sd && startsHere ? sd : '·'}</span><span class="what"></span>`;
         btn.querySelector('.what')!.textContent = e.title;
-        btn.addEventListener('click', () => scrollToId(e.id));
+        btn.addEventListener('click', () => emit('activities:select', { ids: [e.id] }));
         li.append(btn);
         list.append(li);
       }
 
-      years.querySelectorAll('.month').forEach((b) => {
-        const el = b as HTMLElement;
-        el.classList.toggle('current', el.dataset.month === `${viewYear}-${pad(viewMonth)}`);
+      years.querySelectorAll<HTMLElement>('.month').forEach((b) => {
+        b.classList.toggle('current', b.dataset.month === `${viewYear}-${pad(viewMonth)}`);
       });
+      paintMarks();
+    }
+
+    function show(year: number, month: number, { announce = true } = {}) {
+      const yearChanged = year !== viewYear;
+      viewYear = year;
+      viewMonth = month;
+      render();
+      if (yearChanged && announce) emit('activities:year', { year });
     }
 
     function go(delta: number) {
-      viewMonth += delta;
-      if (viewMonth < 1) { viewMonth = 12; viewYear--; }
-      if (viewMonth > 12) { viewMonth = 1; viewYear++; }
-      render();
+      let y = viewYear;
+      let m = viewMonth + delta;
+      if (m < 1) { m = 12; y--; }
+      if (m > 12) { m = 1; y++; }
+      show(y, m);
     }
 
     // Year overview: one row per year, 12 month cells shaded by activity.
@@ -191,10 +228,8 @@ const events = Astro.props.items.map((n) => ({
         b.textContent = MONTHS[m - 1][0];
         b.title = `${MONTHS[m - 1]} ${y}${count ? ` · ${count} ${count === 1 ? 'entry' : 'entries'}` : ''}`;
         b.addEventListener('click', () => {
-          viewYear = y;
-          viewMonth = m;
-          render();
-          if (count) scrollToId(`m-${mk}`);
+          show(y, m, { announce: false });
+          emit('activities:goto-month', { year: y, month: m });
         });
         months.append(b);
       }
@@ -202,26 +237,55 @@ const events = Astro.props.items.map((n) => ({
       years.append(row);
     }
 
-    const prevBtn = root.querySelector('[data-prev]')!;
-    const nextBtn = root.querySelector('[data-next]')!;
-    const onPrev = () => go(-1);
-    const onNext = () => go(1);
-    prevBtn.addEventListener('click', onPrev);
-    nextBtn.addEventListener('click', onNext);
+    root.querySelector('[data-prev]')!.addEventListener('click', () => go(-1), { signal });
+    root.querySelector('[data-next]')!.addEventListener('click', () => go(1), { signal });
+
+    // Feed → calendar.
+    document.addEventListener(
+      'activities:highlight',
+      (ev) => {
+        const { id, start } = (ev as CustomEvent<{ id: string | null; start?: string }>).detail;
+        hovered = id;
+        if (id && start) {
+          const [y, m] = start.split('-').map(Number);
+          if (y !== viewYear || m !== viewMonth) show(y, m, { announce: false });
+        }
+        paintMarks();
+      },
+      { signal },
+    );
+    document.addEventListener(
+      'activities:show-year',
+      (ev) => {
+        const { year } = (ev as CustomEvent<{ year: number }>).detail;
+        if (year !== viewYear) show(year, latestMonthOf(year), { announce: false });
+      },
+      { signal },
+    );
+    document.addEventListener(
+      'activities:focused',
+      (ev) => {
+        const { ids, start } = (ev as CustomEvent<{ ids: string[]; start?: string }>).detail;
+        focused = ids;
+        if (start) {
+          const [y, m] = start.split('-').map(Number);
+          if (y !== viewYear || m !== viewMonth) show(y, m, { announce: false });
+        }
+        paintMarks();
+      },
+      { signal },
+    );
 
     // Follow the reader: show the month whose entries are on screen.
     const io = new IntersectionObserver(
       (entries) => {
+        if (hovered) return;
         const visible = entries.filter((e) => e.isIntersecting);
         if (!visible.length) return;
         const mk = (visible[0].target as HTMLElement).dataset.month;
         if (!mk) return;
         const [y, m] = mk.split('-').map(Number);
-        if (y !== viewYear || m !== viewMonth) {
-          viewYear = y;
-          viewMonth = m;
-          render();
-        }
+        if (y !== viewYear || m !== viewMonth) show(y, m, { announce: false });
       },
       { rootMargin: '-20% 0px -65% 0px' },
     );
@@ -229,18 +293,13 @@ const events = Astro.props.items.map((n) => ({
       if (el.closest('[data-activity-calendar]')) return;
       io.observe(el);
     });
+    signal.addEventListener('abort', () => io.disconnect());
 
     render();
-
-    cleanup = () => {
-      io.disconnect();
-      prevBtn.removeEventListener('click', onPrev);
-      nextBtn.removeEventListener('click', onNext);
-    };
   }
 
   document.addEventListener('astro:page-load', init);
-  document.addEventListener('astro:before-swap', () => cleanup?.());
+  document.addEventListener('astro:before-swap', () => abort?.abort());
 </script>
 
 <style>
@@ -248,6 +307,13 @@ const events = Astro.props.items.map((n) => ({
     display: flex;
     flex-direction: column;
     gap: 1rem;
+  }
+  @media (max-width: 899px) {
+    .calendar {
+      width: 100%;
+      max-width: 24rem;
+      margin-inline: auto;
+    }
   }
   @media (scripting: none) {
     .calendar { display: none; }
@@ -348,6 +414,24 @@ const events = Astro.props.items.map((n) => ({
     background-color: var(--accent-tint);
   }
   .grid :global(.day.long:hover) { background-color: #d4e0ed; }
+  .grid :global(.day.hl) {
+    color: #fff;
+    background-color: var(--accent-strong);
+    box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent-soft);
+    transform: scale(1.08);
+    position: relative;
+    z-index: 1;
+  }
+  .grid :global(.day.range.hl) {
+    box-shadow: none;
+    transform: none;
+  }
+  .grid :global(.day.long.hl) {
+    color: #fff;
+    background-color: var(--accent-soft);
+    box-shadow: none;
+    transform: none;
+  }
 
   .month-events {
     list-style: none;
@@ -374,6 +458,7 @@ const events = Astro.props.items.map((n) => ({
     cursor: pointer;
     transition: background-color 0.2s var(--ease), color 0.2s var(--ease);
   }
+  .month-events :global(button.hl),
   .month-events :global(button:hover) {
     background-color: var(--accent-tint);
     color: var(--accent);
