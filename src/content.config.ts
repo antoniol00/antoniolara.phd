@@ -28,8 +28,25 @@ const publications = defineCollection({
       doi: z.string().optional(),
       pdf: z.string().optional(),
       url: z.url().optional(),
+      /** Source code repository. */
+      code: z.url().optional(),
       selected: z.boolean().default(false),
     }),
 });
 
-export const collections = { publications };
+const projects = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/projects' }),
+  schema: z.object({
+    title: z.string(),
+    summary: z.string(),
+    year: z.number(),
+    tags: z.array(z.string()).default([]),
+    repo: z.url().optional(),
+    links: z.array(z.object({ label: z.string(), href: z.url() })).default([]),
+    /** Keys of related publications (e.g. "J4"). */
+    publications: z.array(z.string()).default([]),
+    featured: z.boolean().default(false),
+  }),
+});
+
+export const collections = { publications, projects };

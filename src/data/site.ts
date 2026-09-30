@@ -36,5 +36,7 @@ export const socials: Social[] = [
 export const nav = [
   { label: 'About', href: '/' },
   { label: 'Publications', href: '/publications' },
+  { label: 'Projects', href: '/projects' },
   { label: 'CV', href: '/cv' },
+  { label: 'Gallery', href: '/gallery' },
 ];

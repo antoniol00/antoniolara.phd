@@ -1,0 +1,149 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import { url } from '../lib/url';
+
+const projects = (await getCollection('projects')).sort(
+  (a, b) =>
+    Number(b.data.featured) - Number(a.data.featured) ||
+    b.data.year - a.data.year ||
+    a.data.title.localeCompare(b.data.title),
+);
+const rendered = await Promise.all(projects.map(async (p) => ({ p, Content: (await render(p)).Content })));
+---
+
+<BaseLayout
+  title="Projects"
+  description="Research and personal projects by Antonio Lara Gutiérrez: honeypots, GANs, concept drift and malware analysis."
+>
+  <div class="stack">
+    <header class="page-header">
+      <h1>Projects</h1>
+      <p>
+        Open-source tools and research prototypes: generative honeypots, synthetic traffic for
+        intrusion detection, concept-drift adaptation, malware classification and attribution.
+      </p>
+    </header>
+
+    <ul class="grid">
+      {
+        rendered.map(({ p, Content }) => (
+          <li class="card">
+            <div class="top">
+              <span class="eyebrow">{p.data.year}</span>
+              {p.data.featured && <span class="featured mono">Featured</span>}
+            </div>
+            <h2>
+              {p.data.repo ? (
+                <a href={p.data.repo} target="_blank" rel="noopener">
+                  {p.data.title}
+                </a>
+              ) : (
+                p.data.title
+              )}
+            </h2>
+            <p class="summary">{p.data.summary}</p>
+            <div class="body soft">
+              <Content />
+            </div>
+            {p.data.tags.length > 0 && (
+              <ul class="tags">
+                {p.data.tags.map((t) => (
+                  <li class="tag">{t}</li>
+                ))}
+              </ul>
+            )}
+            <div class="links">
+              {p.data.repo && (
+                <a class="pill" href={p.data.repo} target="_blank" rel="noopener">
+                  <Icon name="github" size={12} /> Code
+                </a>
+              )}
+              {p.data.links.map((l) => (
+                <a class="pill" href={l.href} target="_blank" rel="noopener">
+                  <Icon name="external-link" size={12} /> {l.label}
+                </a>
+              ))}
+              {p.data.publications.map((key) => (
+                <a class="pill mono" href={`${url('/publications')}#${key}`}>
+                  <Icon name="file-text" size={12} /> {key}
+                </a>
+              ))}
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</BaseLayout>
+
+<style>
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+  .grid {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  @media (min-width: 768px) {
+    .grid { grid-template-columns: 1fr 1fr; }
+  }
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    background-color: var(--bg-tint);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+  .card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .featured {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--fg-mute);
+  }
+  h2 {
+    font-size: 1.6rem;
+    line-height: 1.2;
+  }
+  h2 a { color: var(--fg); }
+  h2 a:hover { color: var(--accent); opacity: 1; }
+  .summary {
+    font-size: 0.925rem;
+    line-height: 1.6;
+  }
+  .body {
+    font-size: 0.85rem;
+    line-height: 1.65;
+  }
+  .body :global(p + p) { margin-top: 0.5rem; }
+  .tags {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: auto;
+    padding-top: 0.5rem;
+  }
+</style>

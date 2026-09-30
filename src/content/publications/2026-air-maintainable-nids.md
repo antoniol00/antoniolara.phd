@@ -10,6 +10,7 @@ venue: Artificial Intelligence Review (Springer)
 year: 2026
 abbr: AIR
 cover: ../../assets/publications/air.png
+code: https://github.com/antoniol00/CiberIA_O1_A1
 jcr:
   quartile: Q1
   impactFactor: 18.8

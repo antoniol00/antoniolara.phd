@@ -11,6 +11,7 @@ details: 56, 419
 year: 2026
 abbr: APIN
 cover: ../../assets/publications/apin.png
+code: https://github.com/antoniol00/GenPot
 jcr:
   quartile: Q2
   impactFactor: 3.5

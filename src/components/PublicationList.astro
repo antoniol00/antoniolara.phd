@@ -15,7 +15,7 @@ const self = 'Lara-Gutiérrez, A.';
 <ul class="rule-list pubs">
   {
     items.map(({ data: pub }) => (
-      <li class="pub">
+      <li class="pub" id={pub.key}>
         {pub.cover ? (
           <div class:list={['badge', 'cover', pub.type]}>
             <Image src={pub.cover} alt={`${pub.abbr ?? pub.venue} cover`} width={240} />
@@ -71,6 +71,11 @@ const self = 'Lara-Gutiérrez, A.';
                 <Icon name="file-text" size={12} /> PDF
               </a>
             )}
+            {pub.code && (
+              <a class="pill" href={pub.code} target="_blank" rel="noopener">
+                <Icon name="github" size={12} /> Code
+              </a>
+            )}
             {pub.url && (
               <a class="pill" href={pub.url} target="_blank" rel="noopener">
                 <Icon name="external-link" size={12} /> Link
@@ -85,6 +90,7 @@ const self = 'Lara-Gutiérrez, A.';
 
 <style>
   .pub {
+    scroll-margin-top: 5rem;
     display: grid;
     grid-template-columns: 1fr;
     gap: 1.25rem;

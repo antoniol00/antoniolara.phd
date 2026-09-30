@@ -11,6 +11,7 @@ details: 102, 104584
 year: 2026
 abbr: JISA
 cover: ../../assets/publications/jisa.jpg
+code: https://github.com/antoniol00/AMD-GAN
 jcr:
   quartile: Q2
   impactFactor: 4.4
