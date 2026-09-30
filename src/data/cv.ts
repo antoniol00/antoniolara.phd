@@ -1,4 +1,29 @@
 // Source: docs/cv.pdf (last updated September 2026).
+import type { ImageMetadata } from 'astro';
+import eoi from '../assets/logos/eoi.png';
+import etsi from '../assets/logos/etsi-informatica.png';
+import google from '../assets/logos/google.png';
+import ministerio from '../assets/logos/ministerio.png';
+import nics from '../assets/logos/nics.png';
+import softproject from '../assets/logos/softproject.png';
+import uma from '../assets/logos/uma.png';
+import waikato from '../assets/logos/waikato.png';
+
+export interface Logo {
+  src: ImageMetadata;
+  alt: string;
+}
+
+const logos = {
+  eoi: { src: eoi, alt: 'EOI' },
+  etsi: { src: etsi, alt: 'ETSI Informática, University of Málaga' },
+  google: { src: google, alt: 'Google' },
+  ministerio: { src: ministerio, alt: 'Spanish Ministry of Science, Innovation and Universities' },
+  nics: { src: nics, alt: 'NICS Lab' },
+  softproject: { src: softproject, alt: 'SoftProject' },
+  uma: { src: uma, alt: 'University of Málaga' },
+  waikato: { src: waikato, alt: 'University of Waikato' },
+} satisfies Record<string, Logo>;
 
 export const researchProfile =
   'PhD candidate and FPU predoctoral researcher at the University of Málaga (NICS Lab). My research lies at the intersection of Artificial Intelligence and Cybersecurity, with emphasis on concept-drift detection and adaptation in AI-driven threat detection systems; multimodal malware classification and attribution through static, dynamic and visual feature fusion; generative models (GANs and LLMs) for adversarial robustness of intrusion detection and for adaptive cyber deception; and LLM agents for automated threat intelligence. My goal is to build robust, verifiable and maintainable AI defenses against advanced cyber threats.';
@@ -10,12 +35,14 @@ export interface TimelineEntry {
   location?: string;
   summary?: string;
   bullets?: string[];
+  logo?: Logo;
 }
 
 export const education: TimelineEntry[] = [
   {
     period: 'Sep 2024 – Present',
     role: 'PhD in Information Technologies',
+    logo: logos.nics,
     where: 'University of Málaga — NICS Lab',
     location: 'Málaga, Spain',
     bullets: [
@@ -27,6 +54,7 @@ export const education: TimelineEntry[] = [
   {
     period: 'Oct 2023 – Oct 2024',
     role: "Master's in Big Data and Business Analytics",
+    logo: logos.eoi,
     where: 'School of Industrial Organisation (EOI)',
     location: 'Madrid, Spain',
     summary:
@@ -35,6 +63,7 @@ export const education: TimelineEntry[] = [
   {
     period: 'Jul 2022 – Jun 2024',
     role: 'M.Sc. in Computer Engineering — Cybersecurity',
+    logo: logos.etsi,
     where: 'University of Málaga',
     location: 'Málaga, Spain',
     bullets: [
@@ -45,6 +74,7 @@ export const education: TimelineEntry[] = [
   {
     period: 'Jul 2018 – Jul 2022',
     role: 'B.Sc. in Computer Engineering — Information Technologies',
+    logo: logos.etsi,
     where: 'University of Málaga',
     location: 'Málaga, Spain',
     bullets: [
@@ -58,6 +88,7 @@ export const researchExperience: TimelineEntry[] = [
   {
     period: 'Feb 2026 – Present',
     role: 'Visiting Researcher',
+    logo: logos.waikato,
     where: 'University of Waikato — Te Ipu o Te Mahara (Artificial Intelligence Institute)',
     location: 'Hamilton, New Zealand',
     summary:
@@ -66,6 +97,7 @@ export const researchExperience: TimelineEntry[] = [
   {
     period: 'Apr 2024 – Present',
     role: 'R&D Engineer / Researcher',
+    logo: logos.nics,
     where: 'University of Málaga — NICS Lab (Network, Information and Computer Security)',
     location: 'Málaga, Spain',
     bullets: [
@@ -76,6 +108,7 @@ export const researchExperience: TimelineEntry[] = [
   {
     period: 'Mar 2022 – Oct 2023',
     role: 'Research & Technical Assistant',
+    logo: logos.uma,
     where: 'University of Málaga — Dept. of Languages and Computer Science',
     location: 'Málaga, Spain',
     bullets: [
@@ -89,6 +122,7 @@ export const industryExperience: TimelineEntry[] = [
   {
     period: 'Jan 2023 – Jan 2024',
     role: 'Junior Integration Engineer',
+    logo: logos.softproject,
     where: 'SoftProject Ibérica S.L.',
     location: 'Málaga, Spain',
     bullets: [
@@ -102,6 +136,7 @@ export const awards: TimelineEntry[] = [
   {
     period: 'Aug 2026',
     role: 'Awarded Project — Chair of Cybersecurity, University of Málaga & Google (VirusTotal)',
+    logo: logos.google,
     where: 'Competitive call of the UMA–Google Cybersecurity Chair',
     location: 'Málaga, Spain',
     summary:
@@ -110,6 +145,7 @@ export const awards: TimelineEntry[] = [
   {
     period: 'Current',
     role: 'FPU Predoctoral Fellowship (Formación de Profesorado Universitario)',
+    logo: logos.ministerio,
     where: 'Spanish Ministry of Science, Innovation and Universities',
     location: 'Spain',
     summary:
@@ -118,6 +154,7 @@ export const awards: TimelineEntry[] = [
   {
     period: '2022 – 2024',
     role: 'Extraordinary Graduation Award (Valedictorian)',
+    logo: logos.etsi,
     where: 'School of Computer Engineering, University of Málaga',
     location: 'Málaga, Spain',
     summary: 'Highest academic record (ranked 1st) of the M.Sc. in Computer Engineering cohort.',
@@ -125,6 +162,7 @@ export const awards: TimelineEntry[] = [
   {
     period: '2018 – 2022',
     role: 'Extraordinary Graduation Award (Valedictorian) & Outstanding Thesis Award',
+    logo: logos.etsi,
     where: 'School of Computer Engineering, University of Málaga',
     location: 'Málaga, Spain',
     summary: 'Highest academic record (ranked 1st) of the B.Sc. in Computer Engineering cohort.',
@@ -132,6 +170,7 @@ export const awards: TimelineEntry[] = [
   {
     period: '2018 – 2022',
     role: 'Best Final Degree Project Award (2nd edition)',
+    logo: logos.uma,
     where: 'Chair of Commerce and Digital Transformation, University of Málaga',
     location: 'Málaga, Spain',
     summary:
@@ -152,28 +191,11 @@ export const teaching: TimelineEntry[] = [
   },
 ];
 
-export const skills: { area: string; items: string }[] = [
-  { area: 'Programming', items: 'Python, Java, C/C++, JavaScript, R, Shell, CUDA, SQL, PHP' },
-  {
-    area: 'ML & AI',
-    items:
-      'PyTorch, TensorFlow, scikit-learn, LightGBM, XGBoost, SHAP, Grad-CAM; GANs; LLMs (Gemma, LLaMA, Zephyr) and tool-calling agents',
-  },
-  {
-    area: 'Security',
-    items:
-      'Metasploit, Wireshark, Snort/Suricata, honeypots (OpenCanary), malware sandboxes, VirusTotal / GTI API',
-  },
-  {
-    area: 'Research',
-    items: 'Academic writing, experimental design, statistical testing, peer review',
-  },
-];
-
 export const languages = [
   { name: 'Spanish', level: 'Native' },
   { name: 'English', level: 'C2 — Cambridge Proficiency (score 207)' },
   { name: 'French', level: 'B1' },
+  { name: 'Chinese', level: 'A1' },
 ];
 
 export const researchInterests = [
