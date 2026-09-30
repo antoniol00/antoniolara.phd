@@ -11,4 +11,5 @@ venue: XIX Reunión Española sobre Criptología y Seguridad de la Información 
 details: Universidad de La Laguna, Tenerife, 17–21 Mar. 2026. Proceedings, pp. 326–331
 year: 2026
 abbr: RECSI 2026
+cover: ../../assets/publications/recsi2026.png
 ---

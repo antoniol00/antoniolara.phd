@@ -10,6 +10,7 @@ venue: Journal of Information Security and Applications (Elsevier)
 details: 102, 104584
 year: 2026
 abbr: JISA
+cover: ../../assets/publications/jisa.jpg
 jcr:
   quartile: Q2
   impactFactor: 4.4

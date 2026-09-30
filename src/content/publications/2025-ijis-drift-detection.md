@@ -10,6 +10,7 @@ venue: International Journal of Information Security (Springer)
 details: 24, 199
 year: 2025
 abbr: IJIS
+cover: ../../assets/publications/ijis.png
 jcr:
   quartile: Q1
   impactFactor: 5.0

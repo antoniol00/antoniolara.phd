@@ -9,6 +9,7 @@ authors:
 venue: Artificial Intelligence Review (Springer)
 year: 2026
 abbr: AIR
+cover: ../../assets/publications/air.png
 jcr:
   quartile: Q1
   impactFactor: 18.8

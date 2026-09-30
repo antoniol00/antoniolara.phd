@@ -10,6 +10,7 @@ venue: Applied Intelligence (Springer)
 details: 56, 419
 year: 2026
 abbr: APIN
+cover: ../../assets/publications/apin.png
 jcr:
   quartile: Q2
   impactFactor: 3.5
