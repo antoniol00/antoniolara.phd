@@ -5,12 +5,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from '../components/Icon.astro';
 import PublicationList from '../components/PublicationList.astro';
 import { site, socials } from '../data/site';
-import { news, researchInterests } from '../data/cv';
+import { researchInterests } from '../data/cv';
+import { getNews, parseDate, shortMonth } from '../lib/news';
 import { getPublications } from '../lib/publications';
 import { url } from '../lib/url';
 import profile from '../assets/profile.png';
 
 const publications = await getPublications();
+const news = (await getNews()).slice(0, 4);
 const selected = publications.filter((p) => p.data.selected);
 const projects = await getCollection('projects');
 
@@ -115,10 +117,12 @@ const stats = [
       </div>
       <ul class="news" data-reveal-stagger="70">
         {
-          news.slice(0, 4).map((n) => (
+          news.map((n) => (
             <li>
-              <time>{n.date}</time>
-              <p class="serif">{n.text}</p>
+              <time datetime={n.data.date}>{shortMonth(parseDate(n.data.date))}</time>
+              <a class="serif" href={`${url('/news')}#${n.id}`}>
+                {n.data.summary}
+              </a>
             </li>
           ))
         }
@@ -341,5 +345,6 @@ const stats = [
     color: var(--accent-soft);
     padding-top: 0.15rem;
   }
-  .news p { color: var(--fg-soft); }
+  .news a { color: var(--fg-soft); }
+  .news a:hover { color: var(--accent); }
 </style>

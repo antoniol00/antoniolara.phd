@@ -184,31 +184,3 @@ export const researchInterests = [
   'LLM agents',
   'Cyber deception',
 ];
-
-export interface NewsItem {
-  date: string;
-  text: string;
-}
-
-export const news: NewsItem[] = [
-  {
-    date: 'Sep 2026',
-    text: 'Presented AgentAPT with the other awarded projects at the Google Safety Engineering Center (GSEC) Málaga.',
-  },
-  {
-    date: 'Aug 2026',
-    text: 'AgentAPT awarded in the competitive call of the UMA–Google (VirusTotal) Cybersecurity Chair.',
-  },
-  {
-    date: 'May 2026',
-    text: 'HDDAF presented at JNIC 2026, Universitat Politècnica de Catalunya, Barcelona.',
-  },
-  {
-    date: 'Mar 2026',
-    text: 'HoneyV presented at RECSI 2026, Universidad de La Laguna, Tenerife.',
-  },
-  {
-    date: 'Feb 2026',
-    text: 'Started a research stay at the University of Waikato AI Institute (Te Ipu o Te Mahara), New Zealand.',
-  },
-];

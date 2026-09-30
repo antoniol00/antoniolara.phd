@@ -1,0 +1,422 @@
+---
+import type { NewsEntry } from '../lib/news';
+
+interface Props {
+  items: NewsEntry[];
+}
+
+const events = Astro.props.items.map((n) => ({
+  id: n.id,
+  title: n.data.title,
+  start: n.data.date,
+  end: n.data.endDate,
+  category: n.data.category,
+}));
+---
+
+<aside class="calendar" data-news-calendar aria-label="News calendar">
+  <script type="application/json" data-events set:html={JSON.stringify(events)} />
+
+  <div class="card">
+    <div class="cal-head">
+      <button type="button" class="nav" data-prev aria-label="Previous month">‹</button>
+      <span class="cal-title" data-title aria-live="polite"></span>
+      <button type="button" class="nav" data-next aria-label="Next month">›</button>
+    </div>
+    <div class="weekdays" aria-hidden="true">
+      <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
+    </div>
+    <div class="grid" data-grid role="grid"></div>
+    <ul class="month-events" data-month-events></ul>
+  </div>
+
+  <div class="card years" data-years>
+    <p class="years-title">Activity</p>
+  </div>
+</aside>
+
+<script>
+  interface CalEvent {
+    id: string;
+    title: string;
+    start: string;
+    end?: string;
+    category: string;
+  }
+
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const ymd = (y: number, m: number, d: number) => `${y}-${pad(m)}-${pad(d)}`;
+
+  let cleanup: (() => void) | undefined;
+
+  function init() {
+    cleanup?.();
+    const root = document.querySelector<HTMLElement>('[data-news-calendar]');
+    if (!root) return;
+
+    const events: CalEvent[] = JSON.parse(root.querySelector('[data-events]')!.textContent || '[]');
+    const grid = root.querySelector<HTMLElement>('[data-grid]')!;
+    const title = root.querySelector<HTMLElement>('[data-title]')!;
+    const list = root.querySelector<HTMLElement>('[data-month-events]')!;
+    const years = root.querySelector<HTMLElement>('[data-years]')!;
+
+    // Index: exact days (including every day of a range) and month-level events.
+    const byDay = new Map<string, CalEvent[]>();
+    const byMonth = new Map<string, CalEvent[]>();
+    for (const e of events) {
+      const [y, m, d] = e.start.split('-').map(Number);
+      const mk = `${y}-${pad(m)}`;
+      byMonth.set(mk, [...(byMonth.get(mk) ?? []), e]);
+      if (!d) continue;
+      const startDate = new Date(Date.UTC(y, m - 1, d));
+      const endDate = e.end ? new Date(e.end + 'T00:00:00Z') : startDate;
+      for (let t = startDate.getTime(); t <= endDate.getTime(); t += 86400000) {
+        const dt = new Date(t);
+        const key = ymd(dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
+        byDay.set(key, [...(byDay.get(key) ?? []), e]);
+      }
+    }
+
+    const latest = events[0]?.start.split('-').map(Number) ?? [new Date().getFullYear(), new Date().getMonth() + 1];
+    let viewYear = latest[0];
+    let viewMonth = latest[1];
+
+    const scrollToId = (id: string) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      el.classList.remove('flash');
+      void el.offsetWidth;
+      el.classList.add('flash');
+      history.replaceState(null, '', `#${id}`);
+    };
+
+    function render() {
+      title.textContent = `${MONTHS[viewMonth - 1]} ${viewYear}`;
+      grid.innerHTML = '';
+      const first = new Date(Date.UTC(viewYear, viewMonth - 1, 1));
+      const offset = (first.getUTCDay() + 6) % 7; // Monday first
+      const days = new Date(Date.UTC(viewYear, viewMonth, 0)).getUTCDate();
+      const today = new Date();
+      const todayKey = ymd(today.getFullYear(), today.getMonth() + 1, today.getDate());
+
+      for (let i = 0; i < offset; i++) grid.append(document.createElement('span'));
+      for (let d = 1; d <= days; d++) {
+        const key = ymd(viewYear, viewMonth, d);
+        const dayEvents = byDay.get(key);
+        const cell = document.createElement(dayEvents ? 'button' : 'span');
+        cell.className = 'day';
+        cell.textContent = String(d);
+        if (key === todayKey) cell.classList.add('today');
+        if (dayEvents) {
+          cell.classList.add('has-event');
+          const prev = byDay.get(ymd(viewYear, viewMonth, d - 1));
+          const next = byDay.get(ymd(viewYear, viewMonth, d + 1));
+          const shares = (other?: CalEvent[]) => !!other?.some((e) => dayEvents.includes(e));
+          if (shares(prev) || shares(next)) cell.classList.add('range');
+          if (!shares(prev)) cell.classList.add('range-start');
+          if (!shares(next)) cell.classList.add('range-end');
+          cell.setAttribute('title', dayEvents.map((e) => e.title).join('\n'));
+          cell.setAttribute('aria-label', `${d} ${MONTHS[viewMonth - 1]}: ${dayEvents.map((e) => e.title).join(', ')}`);
+          cell.addEventListener('click', () => scrollToId(dayEvents[0].id));
+        }
+        grid.append(cell);
+      }
+
+      list.innerHTML = '';
+      const monthEvents = byMonth.get(`${viewYear}-${pad(viewMonth)}`) ?? [];
+      if (monthEvents.length === 0) {
+        const li = document.createElement('li');
+        li.className = 'empty';
+        li.textContent = 'Nothing this month.';
+        list.append(li);
+      }
+      for (const e of monthEvents) {
+        const li = document.createElement('li');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        const day = e.start.split('-')[2];
+        btn.innerHTML = `<span class="when">${day ? Number(day) : '·'}</span><span class="what"></span>`;
+        btn.querySelector('.what')!.textContent = e.title;
+        btn.addEventListener('click', () => scrollToId(e.id));
+        li.append(btn);
+        list.append(li);
+      }
+
+      years.querySelectorAll('.month').forEach((b) => {
+        const el = b as HTMLElement;
+        el.classList.toggle('current', el.dataset.month === `${viewYear}-${pad(viewMonth)}`);
+      });
+    }
+
+    function go(delta: number) {
+      viewMonth += delta;
+      if (viewMonth < 1) { viewMonth = 12; viewYear--; }
+      if (viewMonth > 12) { viewMonth = 1; viewYear++; }
+      render();
+    }
+
+    // Year overview: one row per year, 12 month cells shaded by activity.
+    years.querySelectorAll('.year-row').forEach((r) => r.remove());
+    const allYears = events.map((e) => Number(e.start.slice(0, 4)));
+    const maxYear = Math.max(...allYears, viewYear);
+    const minYear = Math.min(...allYears, viewYear);
+    for (let y = maxYear; y >= minYear; y--) {
+      const row = document.createElement('div');
+      row.className = 'year-row';
+      const label = document.createElement('span');
+      label.className = 'year-label';
+      label.textContent = String(y);
+      row.append(label);
+      const months = document.createElement('div');
+      months.className = 'months';
+      for (let m = 1; m <= 12; m++) {
+        const mk = `${y}-${pad(m)}`;
+        const count = byMonth.get(mk)?.length ?? 0;
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = `month level-${Math.min(count, 3)}`;
+        b.dataset.month = mk;
+        b.textContent = MONTHS[m - 1][0];
+        b.title = `${MONTHS[m - 1]} ${y}${count ? ` · ${count} ${count === 1 ? 'entry' : 'entries'}` : ''}`;
+        b.addEventListener('click', () => {
+          viewYear = y;
+          viewMonth = m;
+          render();
+          if (count) scrollToId(`m-${mk}`);
+        });
+        months.append(b);
+      }
+      row.append(months);
+      years.append(row);
+    }
+
+    const prevBtn = root.querySelector('[data-prev]')!;
+    const nextBtn = root.querySelector('[data-next]')!;
+    const onPrev = () => go(-1);
+    const onNext = () => go(1);
+    prevBtn.addEventListener('click', onPrev);
+    nextBtn.addEventListener('click', onNext);
+
+    // Follow the reader: show the month whose entries are on screen.
+    const io = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting);
+        if (!visible.length) return;
+        const mk = (visible[0].target as HTMLElement).dataset.month;
+        if (!mk) return;
+        const [y, m] = mk.split('-').map(Number);
+        if (y !== viewYear || m !== viewMonth) {
+          viewYear = y;
+          viewMonth = m;
+          render();
+        }
+      },
+      { rootMargin: '-20% 0px -65% 0px' },
+    );
+    document.querySelectorAll('[data-month]').forEach((el) => {
+      if (el.closest('[data-news-calendar]')) return;
+      io.observe(el);
+    });
+
+    render();
+
+    cleanup = () => {
+      io.disconnect();
+      prevBtn.removeEventListener('click', onPrev);
+      nextBtn.removeEventListener('click', onNext);
+    };
+  }
+
+  document.addEventListener('astro:page-load', init);
+  document.addEventListener('astro:before-swap', () => cleanup?.());
+</script>
+
+<style>
+  .calendar {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  @media (scripting: none) {
+    .calendar { display: none; }
+  }
+  .card {
+    padding: 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background-color: var(--bg);
+    box-shadow: var(--shadow-sm);
+  }
+  .cal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+  .cal-title {
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .nav {
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg);
+    color: var(--fg-soft);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.2s var(--ease), color 0.2s var(--ease), border-color 0.2s var(--ease);
+  }
+  .nav:hover {
+    color: var(--accent);
+    border-color: var(--accent-soft);
+    background-color: var(--accent-tint);
+  }
+  .weekdays,
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+  }
+  .weekdays {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--fg-mute);
+    margin-bottom: 0.3rem;
+  }
+  .grid {
+    row-gap: 0.2rem;
+  }
+  .grid :global(.day) {
+    display: grid;
+    place-items: center;
+    height: 2rem;
+    width: 100%;
+    max-width: 2.6rem;
+    justify-self: center;
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--fg-soft);
+    border: none;
+    background: none;
+    border-radius: 999px;
+    font-variant-numeric: tabular-nums;
+  }
+  .grid :global(.day.today) {
+    box-shadow: inset 0 0 0 1px var(--border-strong);
+  }
+  .grid :global(.day.has-event) {
+    color: #fff;
+    font-weight: 600;
+    background-color: var(--accent);
+    cursor: pointer;
+    transition: transform 0.25s var(--ease), background-color 0.25s var(--ease);
+  }
+  .grid :global(.day.has-event:hover) {
+    background-color: var(--accent-strong);
+    transform: scale(1.1);
+  }
+  .grid :global(.day.range) {
+    border-radius: 0;
+    background-color: var(--accent-soft);
+  }
+  .grid :global(.day.range.range-start) { border-radius: 999px 0 0 999px; background-color: var(--accent); }
+  .grid :global(.day.range.range-end) { border-radius: 0 999px 999px 0; background-color: var(--accent); }
+  .grid :global(.day.range:hover) { transform: none; background-color: var(--accent-strong); }
+
+  .month-events {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-top: 0.9rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+  }
+  .month-events :global(button) {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.35rem 0.4rem;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    text-align: left;
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--fg-soft);
+    cursor: pointer;
+    transition: background-color 0.2s var(--ease), color 0.2s var(--ease);
+  }
+  .month-events :global(button:hover) {
+    background-color: var(--accent-tint);
+    color: var(--accent);
+  }
+  .month-events :global(.when) {
+    min-width: 1.4rem;
+    font-weight: 600;
+    color: var(--accent-soft);
+    font-variant-numeric: tabular-nums;
+  }
+  .month-events :global(.empty) {
+    font-size: 0.85rem;
+    color: var(--fg-mute);
+    font-style: italic;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .years-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    margin-bottom: 0.6rem;
+  }
+  .years :global(.year-row) {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .years :global(.year-row + .year-row) { margin-top: 0.4rem; }
+  .years :global(.year-label) {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--fg-mute);
+    font-variant-numeric: tabular-nums;
+  }
+  .years :global(.months) {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 3px;
+  }
+  .years :global(.month) {
+    aspect-ratio: 1;
+    min-width: 0;
+    max-width: 1.75rem;
+    width: 100%;
+    justify-self: center;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    font: inherit;
+    font-size: 0.6rem;
+    color: var(--fg-mute);
+    background-color: var(--bg-soft);
+    cursor: pointer;
+    transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+  }
+  .years :global(.month:hover) { transform: scale(1.15); }
+  .years :global(.month.level-1) { background-color: #b9cbe0; color: var(--accent); }
+  .years :global(.month.level-2) { background-color: var(--accent-soft); color: #fff; }
+  .years :global(.month.level-3) { background-color: var(--accent); color: #fff; }
+  .years :global(.month.current) { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--accent); }
+</style>

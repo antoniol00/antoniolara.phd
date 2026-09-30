@@ -13,9 +13,12 @@ npm run build    # static output in dist/
 ## Content
 
 - `src/data/site.ts` — name, description, social links, navigation.
-- `src/data/cv.ts` — CV sections (education, experience, awards, skills, news…).
+- `src/data/cv.ts` — CV sections (education, experience, awards, skills…).
 - `src/content/publications/*.md` — one file per publication (schema in `src/content.config.ts`).
   Covers/logos live in `src/assets/publications/`.
+- `src/content/news/*.md` — one file per news item: `date` (`YYYY-MM-DD`, or `YYYY-MM` if the day
+  doesn't matter), optional `endDate` for multi-day events, `category`, `summary` (one line for the
+  home page), `location`, `links`, related `publications`, optional `image`; the body is the detailed text.
 - `src/content/projects/*.md` — one file per project (summary, tags, repo, links, related publications).
 - `src/data/authors.ts` — ORCID iDs of co-authors, linked from author names.
 - `src/assets/gallery/<country>/` — gallery photos, one folder per country (see the README there;

@@ -1,0 +1,283 @@
+---
+import { render } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import NewsCalendar from '../components/NewsCalendar.astro';
+import {
+  categoryLabels,
+  formatRange,
+  getNews,
+  monthKey,
+  monthLabel,
+  parseDate,
+  type NewsEntry,
+} from '../lib/news';
+import { url } from '../lib/url';
+
+const news = await getNews();
+
+interface Rendered {
+  entry: NewsEntry;
+  Content: Awaited<ReturnType<typeof render>>['Content'];
+  start: ReturnType<typeof parseDate>;
+  end?: ReturnType<typeof parseDate>;
+}
+
+// year → month → entries, newest first (news is already sorted).
+const years: { year: number; months: { key: string; label: string; entries: Rendered[] }[] }[] = [];
+for (const entry of news) {
+  const start = parseDate(entry.data.date);
+  const end = entry.data.endDate ? parseDate(entry.data.endDate) : undefined;
+  const { Content } = await render(entry);
+  let y = years.find((g) => g.year === start.year);
+  if (!y) years.push((y = { year: start.year, months: [] }));
+  const key = monthKey(start);
+  let m = y.months.find((g) => g.key === key);
+  if (!m) y.months.push((m = { key, label: monthLabel(start), entries: [] }));
+  m.entries.push({ entry, Content, start, end });
+}
+---
+
+<BaseLayout title="News" description="News, talks, awards and research activity of Antonio Lara Gutiérrez.">
+  <div class="stack">
+    <header class="page-header" data-reveal>
+      <span class="eyebrow">Activity</span>
+      <h1>News</h1>
+      <p>
+        Talks, awards, conferences, publications and research stays, month by month. Use the
+        calendar to jump through what has been going on.
+      </p>
+    </header>
+
+    <div class="layout">
+      <div class="aside-wrap">
+        <div class="sticky">
+          <NewsCalendar items={news} />
+        </div>
+      </div>
+
+      <div class="feed">
+        {
+          years.map((y) => (
+            <section class="year">
+              <h2 class="year-label" data-reveal>{y.year}</h2>
+              {y.months.map((m) => (
+                <div class="month" id={`m-${m.key}`} data-month={m.key}>
+                  <h3 class="month-label" data-reveal>{m.label}</h3>
+                  <ol class="entries" data-reveal-stagger="80">
+                    {m.entries.map(({ entry, Content, start, end }) => (
+                      <li class="entry" id={entry.id}>
+                        <div class="date" aria-hidden="true">
+                          {start.day ? (
+                            <>
+                              <span class="day">{start.day}</span>
+                              <span class="mon">{monthLabel(start).slice(0, 3)}</span>
+                            </>
+                          ) : (
+                            <>
+                              <span class="day small">{monthLabel(start).slice(0, 3)}</span>
+                              <span class="mon">{start.year}</span>
+                            </>
+                          )}
+                        </div>
+                        <article class="body">
+                          <div class="meta">
+                            <span class:list={['cat', entry.data.category]}>
+                              {categoryLabels[entry.data.category]}
+                            </span>
+                            <time datetime={entry.data.date}>{formatRange(start, end)}</time>
+                            {entry.data.location && <span class="loc">· {entry.data.location}</span>}
+                          </div>
+                          <h4>{entry.data.title}</h4>
+                          <div class="content serif">
+                            <Content />
+                          </div>
+                          {(entry.data.links.length > 0 || entry.data.publications.length > 0) && (
+                            <div class="links">
+                              {entry.data.links.map((l) => (
+                                <a class="pill" href={l.href} target="_blank" rel="noopener">
+                                  <Icon name="external-link" size={12} /> {l.label}
+                                </a>
+                              ))}
+                              {entry.data.publications.map((key) => (
+                                <a class="pill mono" href={`${url('/publications')}#${key}`}>
+                                  <Icon name="file-text" size={12} /> {key}
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                        </article>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              ))}
+            </section>
+          ))
+        }
+        {news.length === 0 && <p class="muted italic">No news yet.</p>}
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+  @media (min-width: 900px) {
+    .layout {
+      grid-template-columns: 17rem 1fr;
+      gap: 3rem;
+      align-items: start;
+    }
+    .sticky {
+      position: sticky;
+      top: 5.5rem;
+    }
+  }
+
+  .feed {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+  .year-label {
+    font-size: 2.25rem;
+    font-weight: 300;
+    color: var(--accent);
+    line-height: 1;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-strong);
+  }
+  .month {
+    scroll-margin-top: 6rem;
+    margin-top: 1.75rem;
+  }
+  .month-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--accent-soft);
+    margin-bottom: 0.9rem;
+  }
+  .entries {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .entry {
+    scroll-margin-top: 6rem;
+    display: grid;
+    grid-template-columns: 3.5rem 1fr;
+    gap: 1rem;
+    padding: 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background-color: var(--bg);
+    transition:
+      border-color 0.4s var(--ease),
+      box-shadow 0.4s var(--ease),
+      transform 0.4s var(--ease);
+  }
+  .entry:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+  .entry:global(.flash),
+  .entry:target {
+    animation: flash 2.2s var(--ease);
+  }
+  @keyframes flash {
+    0%, 35% {
+      border-color: var(--accent-soft);
+      box-shadow: 0 0 0 4px var(--accent-tint);
+    }
+  }
+  .date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 3.5rem;
+    border-radius: 10px;
+    background-color: var(--accent-tint);
+    color: var(--accent);
+    line-height: 1;
+  }
+  .day {
+    font-size: 1.35rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .day.small {
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .mon {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 0.2rem;
+  }
+  .body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--fg-mute);
+  }
+  .cat {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.1rem 0.45rem;
+    border-radius: 3px;
+    color: var(--accent);
+    background-color: var(--accent-tint);
+  }
+  .cat.award { color: #8a5a00; background-color: var(--highlight); }
+  .cat.talk,
+  .cat.teaching { color: #25613f; background-color: #e3f1e8; }
+  .cat.research-stay { color: #6a3f86; background-color: #efe7f6; }
+  h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--fg);
+  }
+  .content {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--fg-soft);
+  }
+  .content :global(p + p) { margin-top: 0.6rem; }
+  .content :global(strong) { color: var(--fg); }
+  .content :global(img) { border-radius: 8px; margin-top: 0.5rem; }
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    padding-top: 0.3rem;
+  }
+</style>
