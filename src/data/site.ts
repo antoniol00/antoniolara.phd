@@ -11,7 +11,7 @@ export const site = {
 
 export interface Social {
   name: string;
-  icon: 'mail' | 'github' | 'linkedin' | 'orcid';
+  icon: 'mail' | 'github' | 'linkedin' | 'orcid' | 'scholar' | 'researchgate' | 'lab';
   href: string;
   label: string;
 }
@@ -23,6 +23,24 @@ export const socials: Social[] = [
     icon: 'orcid',
     href: 'https://orcid.org/0009-0009-0796-4631',
     label: 'ORCID',
+  },
+  {
+    name: 'scholar',
+    icon: 'scholar',
+    href: 'https://scholar.google.com/citations?user=5quPVUQAAAAJ&hl=en',
+    label: 'Google Scholar',
+  },
+  {
+    name: 'researchgate',
+    icon: 'researchgate',
+    href: 'https://www.researchgate.net/profile/Antonio-Lara-Gutierrez',
+    label: 'ResearchGate',
+  },
+  {
+    name: 'nics',
+    icon: 'lab',
+    href: 'https://www.nics.uma.es/antonio-lara/',
+    label: 'NICS Lab profile',
   },
   { name: 'github', icon: 'github', href: 'https://github.com/antoniol00', label: 'GitHub' },
   {
