@@ -1,4 +1,4 @@
-# antoniol00.github.io
+# antoniolara.phd
 
 Personal academic website of Antonio Lara Gutiérrez, built with [Astro](https://astro.build).
 
@@ -27,9 +27,11 @@ npm run build    # static output in dist/
 
 ## Deployment
 
-Pushing to `main` builds and deploys to GitHub Pages via `.github/workflows/deploy.yml`
-(Settings → Pages → Source: **GitHub Actions**).
+The site is deployed on [Vercel](https://vercel.com) from the `main` branch (framework preset
+**Astro**, build command `npm run build`, output directory `dist`) and served at
+<https://antoniolara.phd>. The domain is registered with Cloudflare Registrar; DNS records point to
+Vercel.
 
-The site is served at `https://antoniol00.github.io/`.
-To move to a custom domain: set `SITE_URL` to the domain in the workflow, add
-`public/CNAME` with the domain, and configure DNS.
+Every push to `main` triggers a production deploy; pushes to other branches get preview URLs.
+
+The share image `public/og.png` is generated with `node scripts/og-image.mjs`.

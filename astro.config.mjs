@@ -1,10 +1,9 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 
-// GitHub Pages user site at https://antoniol00.github.io/. Once a custom domain is
-// configured, set SITE_URL to it (see .github/workflows/deploy.yml). BASE_PATH is
-// only needed if the site is ever served from a subpath.
-const site = process.env.SITE_URL ?? 'https://antoniol00.github.io';
+// Deployed on Vercel at https://antoniolara.phd. SITE_URL / BASE_PATH can override
+// these (e.g. for a preview on another domain or a subpath).
+const site = process.env.SITE_URL ?? 'https://antoniolara.phd';
 const base = process.env.BASE_PATH ?? '/';
 
 export default defineConfig({

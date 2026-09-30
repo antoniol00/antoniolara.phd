@@ -35,7 +35,7 @@ const svg = `
   <rect x="80" y="382" width="90" height="4" rx="2" fill="#7fb0e3"/>
   <text x="80" y="436" font-family="Segoe UI" font-size="27" fill="#b4c0cd">FPU Predoctoral Researcher · NICS Lab</text>
   <text x="80" y="474" font-family="Segoe UI" font-size="27" fill="#b4c0cd">University of Málaga</text>
-  <text x="80" y="560" font-family="Segoe UI" font-size="22" fill="#7f8d9e">antoniol00.github.io</text>
+  <text x="80" y="560" font-family="Segoe UI" font-size="22" fill="#7f8d9e">antoniolara.phd</text>
 </svg>`;
 
 const rounded = Buffer.from(
