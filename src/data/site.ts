@@ -6,7 +6,7 @@ export const site = {
   tagline: 'AI for Cybersecurity',
   description:
     'PhD candidate and FPU predoctoral researcher at the University of Málaga (NICS Lab), working at the intersection of Artificial Intelligence and Cybersecurity.',
-  email: 'antoniolaragutierrez2000@gmail.com',
+  email: 'alara@uma.es',
 };
 
 export interface Social {
