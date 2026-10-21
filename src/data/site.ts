@@ -11,7 +11,16 @@ export const site = {
 
 export interface Social {
   name: string;
-  icon: 'mail' | 'github' | 'linkedin' | 'orcid' | 'scholar' | 'researchgate' | 'lab';
+  icon:
+    | 'mail'
+    | 'github'
+    | 'linkedin'
+    | 'orcid'
+    | 'scholar'
+    | 'researchgate'
+    | 'scopus'
+    | 'clarivate'
+    | 'lab';
   href: string;
   label: string;
 }
@@ -35,6 +44,18 @@ export const socials: Social[] = [
     icon: 'researchgate',
     href: 'https://www.researchgate.net/profile/Antonio-Lara-Gutierrez',
     label: 'ResearchGate',
+  },
+  {
+    name: 'scopus',
+    icon: 'scopus',
+    href: 'https://www.scopus.com/authid/detail.uri?authorId=60084420300',
+    label: 'Scopus',
+  },
+  {
+    name: 'wos',
+    icon: 'clarivate',
+    href: 'https://www.webofscience.com/wos/author/record/RJB-2855-2026',
+    label: 'Web of Science',
   },
   {
     name: 'nics',
