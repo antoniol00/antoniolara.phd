@@ -20,6 +20,10 @@ export async function getPublications(): Promise<Publication[]> {
   );
 }
 
+/** Where the reader should land: DOI first, then open copies, then the venue. */
+export const publicationLink = (pub: Publication['data']) =>
+  pub.doi ? `https://doi.org/${pub.doi}` : (pub.url ?? pub.pdf ?? pub.venueUrl);
+
 /** Short human label per publication key, e.g. "J4" → "APIN 2026", "C1" → "RECSI 2026". */
 export async function getPublicationLabels(): Promise<Map<string, string>> {
   const items = await getCollection('publications');

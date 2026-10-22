@@ -1,0 +1,230 @@
+---
+// "Cite" pill with a small menu to copy or download the citation as BibTeX or plain text.
+import Icon from './Icon.astro';
+import { citation } from '../lib/cite';
+import type { Publication } from '../lib/publications';
+
+interface Props {
+  pub: Publication['data'];
+}
+
+const { key, bibtex, text } = citation(Astro.props.pub);
+const formats = [
+  { label: 'BibTeX', ext: 'bib', content: bibtex },
+  { label: 'Plain text', ext: 'txt', content: text },
+];
+---
+
+<details class="cite">
+  <summary class="pill" title="Cite this publication">
+    <Icon name="quote" size={12} /> Cite
+  </summary>
+  <div class="menu" role="group" aria-label="Cite this publication">
+    <p class="preview">{text}</p>
+    {
+      formats.map((f) => (
+        <div class="row">
+          <span class="label">{f.label}</span>
+          <button type="button" data-cite-copy={f.content} aria-label={`Copy ${f.label} citation`}>
+            <Icon name="copy" size={13} class="idle" />
+            <Icon name="check" size={13} class="ok" />
+            <span data-text>Copy</span>
+          </button>
+          <button
+            type="button"
+            data-cite-download={f.content}
+            data-filename={`${key}.${f.ext}`}
+            aria-label={`Download ${f.label} citation (.${f.ext})`}
+          >
+            <Icon name="download" size={13} />
+            <span>.{f.ext}</span>
+          </button>
+        </div>
+      ))
+    }
+    <span class="sr-only" aria-live="polite" data-cite-status></span>
+  </div>
+</details>
+
+<script>
+  async function copyText(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // Clipboard API unavailable (e.g. insecure context): fall back to a hidden textarea.
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;opacity:0';
+      document.body.append(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+  }
+
+  function download(text: string, filename: string) {
+    const href = URL.createObjectURL(new Blob([text + '\n'], { type: 'text/plain;charset=utf-8' }));
+    const a = Object.assign(document.createElement('a'), { href, download: filename });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(href), 1000);
+  }
+
+  const timers = new WeakMap<HTMLElement, number>();
+
+  // Delegated once at document level, so it keeps working across view-transition swaps.
+  document.addEventListener('click', async (e) => {
+    const target = e.target as Element;
+
+    const copyBtn = target.closest<HTMLButtonElement>('[data-cite-copy]');
+    if (copyBtn) {
+      await copyText(copyBtn.dataset.citeCopy!);
+      const label = copyBtn.querySelector('[data-text]')!;
+      copyBtn.classList.add('done');
+      label.textContent = 'Copied';
+      const status = copyBtn.closest('.menu')?.querySelector('[data-cite-status]');
+      if (status) status.textContent = 'Citation copied to clipboard';
+      clearTimeout(timers.get(copyBtn));
+      timers.set(
+        copyBtn,
+        window.setTimeout(() => {
+          copyBtn.classList.remove('done');
+          label.textContent = 'Copy';
+          if (status) status.textContent = '';
+        }, 1600),
+      );
+      return;
+    }
+
+    const dlBtn = target.closest<HTMLButtonElement>('[data-cite-download]');
+    if (dlBtn) {
+      download(dlBtn.dataset.citeDownload!, dlBtn.dataset.filename!);
+      return;
+    }
+
+    document.querySelectorAll<HTMLDetailsElement>('details.cite[open]').forEach((d) => {
+      if (!d.contains(target)) d.open = false;
+    });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const open = document.querySelector<HTMLDetailsElement>('details.cite[open]');
+    if (!open) return;
+    open.open = false;
+    open.querySelector('summary')?.focus();
+  });
+
+  // `toggle` does not bubble, so listen in the capture phase. Keep one menu open and inside the viewport.
+  document.addEventListener(
+    'toggle',
+    (e) => {
+      const d = e.target;
+      if (!(d instanceof HTMLDetailsElement) || !d.matches('.cite') || !d.open) return;
+      document.querySelectorAll<HTMLDetailsElement>('details.cite[open]').forEach((o) => {
+        if (o !== d) o.open = false;
+      });
+      const menu = d.querySelector<HTMLElement>('.menu')!;
+      menu.style.removeProperty('--shift');
+      const overflow = menu.getBoundingClientRect().right - (document.documentElement.clientWidth - 16);
+      if (overflow > 0) menu.style.setProperty('--shift', `${-overflow}px`);
+    },
+    true,
+  );
+</script>
+
+<style>
+  .cite {
+    position: relative;
+  }
+  summary {
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    transition: color 0.2s var(--ease), border-color 0.2s var(--ease), background-color 0.2s var(--ease);
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  summary:hover,
+  .cite[open] > summary {
+    color: var(--accent);
+    border-color: var(--accent-soft);
+    background-color: var(--accent-tint);
+  }
+
+  .menu {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 0.45rem);
+    left: 0;
+    translate: var(--shift, 0) 0;
+    width: min(24rem, calc(100vw - 2rem));
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background-color: var(--bg);
+    box-shadow: var(--shadow-lg);
+    animation: pop 0.2s var(--ease);
+  }
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+
+  .preview {
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--fg-soft);
+    overflow-wrap: anywhere;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .label {
+    flex: 1;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--fg);
+  }
+  .row button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font: inherit;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--fg-soft);
+    background-color: var(--bg);
+    cursor: pointer;
+    transition: color 0.2s var(--ease), border-color 0.2s var(--ease), background-color 0.2s var(--ease);
+  }
+  .row button:hover,
+  .row button.done {
+    color: var(--accent);
+    border-color: var(--accent-soft);
+    background-color: var(--accent-tint);
+  }
+  .row button :global(.ok),
+  .row button.done :global(.idle) {
+    display: none;
+  }
+  .row button.done :global(.ok) {
+    display: inline;
+  }
+</style>

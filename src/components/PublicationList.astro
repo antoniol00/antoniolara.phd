@@ -1,7 +1,8 @@
 ---
 import { Image } from 'astro:assets';
 import Icon from './Icon.astro';
-import type { Publication } from '../lib/publications';
+import CiteButton from './CiteButton.astro';
+import { publicationLink, type Publication } from '../lib/publications';
 import { authorOrcids, orcidUrl } from '../data/authors';
 
 interface Props {
@@ -10,16 +11,12 @@ interface Props {
 
 const { items } = Astro.props;
 const self = 'Lara-Gutiérrez, A.';
-
-/** Where the cover and title should take the reader: DOI first, then open copies, then the venue. */
-const mainLink = (pub: Publication['data']) =>
-  pub.doi ? `https://doi.org/${pub.doi}` : (pub.url ?? pub.pdf ?? pub.venueUrl);
 ---
 
 <ul class="pubs" data-reveal-stagger="90">
   {
     items.map(({ data: pub }) => {
-      const href = mainLink(pub);
+      const href = publicationLink(pub);
       return (
         <li class="pub" id={pub.key}>
           <div class="side">
@@ -89,6 +86,7 @@ const mainLink = (pub: Publication['data']) =>
                   <Icon name="external-link" size={12} /> DOI
                 </a>
               )}
+              <CiteButton pub={pub} />
               {pub.pdf && (
                 <a class="pill" href={pub.pdf} target="_blank" rel="noopener">
                   <Icon name="file-text" size={12} /> PDF
@@ -153,6 +151,11 @@ const mainLink = (pub: Publication['data']) =>
     gap: 1.5rem;
     padding-block: 1.6rem;
     border-bottom: 1px solid var(--border);
+  }
+  /* Keep an open cite menu above the following entries (which may still be mid-reveal). */
+  .pub:has(:global(.cite[open])) {
+    position: relative;
+    z-index: 10;
   }
   .pub:first-child { padding-top: 0.5rem; }
   .pub:last-child { border-bottom: none; }
